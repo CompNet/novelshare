@@ -1,3 +1,7 @@
+# novelties-bookshare
+
+Originally based on [https://github.com/bostxavier/Serial-Speakers](Serial-Speakers).
+
 # Serial-Speakers
 Companion toolkit of the *Serial Speakers* dataset, available at https://figshare.com/articles/TV_Series_Corpus/3471839, and detailed in the following paper: https://hal.archives-ouvertes.fr/hal-02477736
 
