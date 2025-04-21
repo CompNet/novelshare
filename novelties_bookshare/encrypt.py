@@ -3,7 +3,6 @@ from typing import List, Optional
 import functools
 import argparse
 import hashlib
-
 from novelties_bookshare.conll import dump_conll2002_bio, load_conll2002_bio
 
 
