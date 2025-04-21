@@ -34,11 +34,9 @@ def decrypt_tokens(
     # encrypted_user_tokens
     matcher = difflib.SequenceMatcher(None, encrypted_tokens, encrypted_user_tokens)
     for tag, i1, i2, j1, j2 in matcher.get_opcodes():
-        print(tag, i1, i2, j1, j2)
         # NOTE: ignores 'insert', 'replace', 'delete'
         if tag == "equal":
             decrypted_tokens[i1:i2] = user_tokens[j1:j2]
-        print(decrypted_tokens)
 
     # second pass
     for tag, i1, i2, j1, j2 in matcher.get_opcodes():

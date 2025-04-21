@@ -35,4 +35,4 @@ if __name__ == "__main__":
 
     tokens, tags = load_conll2002_bio(args.input_file, separator=args.separator)
     encrypted_tokens = encrypt_tokens(tokens)
-    dump_conll2002_bio(tokens, tags, args.output_file, args.separator)
+    dump_conll2002_bio(encrypted_tokens, tags, args.output_file, args.separator)

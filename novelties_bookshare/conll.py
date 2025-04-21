@@ -25,6 +25,8 @@ def load_conll2002_bio(
     tags = []
     for line in raw_data.split("\n"):
         line = line.strip("\n")
+        if len(line) == 0:
+            continue
         token, tag = line.split(separator)
         tokens.append(token)
         tags.append(tag)
