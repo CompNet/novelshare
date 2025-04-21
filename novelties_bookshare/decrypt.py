@@ -4,7 +4,7 @@ import sys
 import argparse
 import difflib
 from nltk.tokenize import word_tokenize
-from encrypt_text import encrypt_tokens
+from novelties_bookshare.encrypt import encrypt_tokens
 
 
 def decrypt_tokens(
@@ -39,15 +39,6 @@ def decrypt_tokens(
 
     return decrypted_tokens
 
-
-ref_tokens = "A B C D E E".split()
-tags = ["B-PER", "O", "O", "O", "B-PER", "I-PER"]
-noisy_tokens = "A B C D E X".split()
-print(f"{ref_tokens=}")
-print(f"{tags=}")
-print(f"{noisy_tokens=}")
-tokens = decrypt_tokens(encrypt_tokens(ref_tokens), tags, noisy_tokens)
-print(f"{tokens=}")
 
 # if __name__ == "__main__":
 #     parser = argparse.ArgumentParser()
