@@ -22,13 +22,16 @@ def load_user_tokens(path: Optional[str], **kwargs) -> List[str]:
 
 
 def decrypt_tokens(
-    encrypted_tokens: list, tags: List[str], user_tokens: List[str]
+    encrypted_tokens: list,
+    tags: List[str],
+    user_tokens: List[str],
+    hash_len: Optional[int] = None,
 ) -> List[str]:
     assert len(encrypted_tokens) == len(tags)
 
     decrypted_tokens = ["[UNK]" for _ in encrypted_tokens]
 
-    encrypted_user_tokens = encrypt_tokens(user_tokens)
+    encrypted_user_tokens = encrypt_tokens(user_tokens, hash_len=hash_len)
 
     # loop over operations turning encrypted_tokens into
     # encrypted_user_tokens
