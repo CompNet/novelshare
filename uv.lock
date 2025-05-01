@@ -70,6 +70,8 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "nltk" },
+    { name = "scrambledtext" },
+    { name = "setuptools" },
 ]
 
 [package.dev-dependencies]
@@ -78,7 +80,11 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "nltk", specifier = ">=3.9.1" }]
+requires-dist = [
+    { name = "nltk", specifier = ">=3.9.1" },
+    { name = "scrambledtext", git = "https://github.com/Aethor/scrambledtext" },
+    { name = "setuptools", specifier = ">=80.0.1" },
+]
 
 [package.metadata.requires-dev]
 dev = [{ name = "pytest", specifier = ">=8.3.5" }]
@@ -201,6 +207,20 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/ff/9c/daa99532c72f25051a90ef90e1413a8d54413a9e64614d9095b0c1c154d0/regex-2024.11.6-cp39-cp39-musllinux_1_2_x86_64.whl", hash = "sha256:a03e02f48cd1abbd9f3b7e3586d97c8f7a9721c436f51a5245b3b9483044480b", size = 772713 },
     { url = "https://files.pythonhosted.org/packages/13/5d/61a533ccb8c231b474ac8e3a7d70155b00dfc61af6cafdccd1947df6d735/regex-2024.11.6-cp39-cp39-win32.whl", hash = "sha256:41758407fc32d5c3c5de163888068cfee69cb4c2be844e7ac517a52770f9af57", size = 261756 },
     { url = "https://files.pythonhosted.org/packages/dc/7b/e59b7f7c91ae110d154370c24133f947262525b5d6406df65f23422acc17/regex-2024.11.6-cp39-cp39-win_amd64.whl", hash = "sha256:b2837718570f95dd41675328e111345f9b7095d821bac435aac173ac80b19983", size = 274110 },
+]
+
+[[package]]
+name = "scrambledtext"
+version = "0.1"
+source = { git = "https://github.com/Aethor/scrambledtext#fbcde2e803f7f8edf6a70b98ab7d614aa252e728" }
+
+[[package]]
+name = "setuptools"
+version = "80.0.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/26/da/7a7021c150030617f90aa4a90a5b23f7b49af877f70ca46967e991645117/setuptools-80.0.1.tar.gz", hash = "sha256:20fe373a22ef9f3925512650d1db90b1b8de01cdb6df91ab1788263139cbf9a2", size = 1354165 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2a/8e/2ee81652472f3c11503d1780c41844a9a9656989b69c29811a4631e4aeb9/setuptools-80.0.1-py3-none-any.whl", hash = "sha256:f4b49d457765b3aae7cbbeb1c71f6633a61b729408c2d1a837dae064cca82ef2", size = 1240915 },
 ]
 
 [[package]]
