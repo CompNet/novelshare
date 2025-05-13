@@ -10,8 +10,14 @@ dependencies = [
     "setuptools>=80.0.1",
 ]
 
+[project.optional-dependencies]
+transformers = [
+    "transformers>=4.51.3",
+]
+
 [dependency-groups]
 dev = [
+    "hypothesis>=6.131.16",
     "pytest>=8.3.5",
 ]
 
