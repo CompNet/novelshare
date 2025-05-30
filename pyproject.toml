@@ -12,8 +12,22 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-transformers = [
+transformers-cuda = [
     "transformers>=4.51.3",
+    "torch>=2.7.0"
+]
+transformers-rocm = [
+    "transformers>=4.51.3",
+    "torch>=2.7.0",
+    "pytorch-triton-rocm>=3.1.0",
+]
+
+[tool.uv]
+conflicts = [
+  [
+    { extra = "transformers-cuda" },
+    { extra = "transformers-rocm" },
+  ],
 ]
 
 [dependency-groups]
@@ -24,3 +38,22 @@ dev = [
 
 [tool.uv.sources]
 scrambledtext = { git = "https://github.com/Aethor/scrambledtext" }
+torch = [
+  { index = "pytorch-cu128", extra = "transformers-cuda" },
+  { index = "pytorch-rocm63", extra = "transformers-rocm" },
+]
+pytorch-triton-rocm = [
+  { index = "pytorch-rocm63", extra = "transformers-rocm" }
+]
+
+
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-rocm63"
+url = "https://download.pytorch.org/whl/rocm6.3"
+explicit = true

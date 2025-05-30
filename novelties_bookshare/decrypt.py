@@ -2,8 +2,9 @@
 from typing import Callable, List, Optional
 import sys, os, argparse, difflib
 import functools as ft
+from novelties_bookshare import encrypt
 from novelties_bookshare.conll import dump_conll2002_bio, load_conll2002_bio
-from novelties_bookshare.encrypt import encrypt_tokens
+from novelties_bookshare.encrypt import encrypt_token, encrypt_tokens
 from novelties_bookshare.utils import strksplit
 
 
@@ -115,7 +116,16 @@ def decryptplugin_mlm(
     pipeline,
     window: int,
 ) -> list[str]:
+    """
+    ref  user
+    ---  ----
+    e1    e1
+    e2    - < deletion
+    e3    e3
+    e4    e4
+    """
     for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+        # TODO: can we fix replace too??
         if tag == "replace" or tag == "delete":
             # the user did not supply some tokens, or supplied a wrong
             # token. In that case, we try to decode the token using BERT
@@ -124,8 +134,16 @@ def decryptplugin_mlm(
                 assert not "[MASK]" in X
                 X[i1 + i] = "[MASK]"  # mask the central token
                 X = " ".join(X)  # pipeline expects a string
-                # pick the most probable token according to the model
-                decrypted_tokens[i1 + i] = pipeline(X)[0]["token_str"]
+                # pick the probable token whose encrypted form match
+                # the encrypted gold token
+                candidates: list[dict] = pipeline(X)
+                print([c["sequence"] for c in candidates])
+                for cand in candidates:
+                    cand = cand["token_str"].strip(" ")
+                    encrypted_cand = encrypt_token(cand, hash_len)
+                    if encrypted_cand == encrypted_tokens[i1 + i]:
+                        decrypted_tokens[i1 + i] = cand
+
     return decrypted_tokens
 
 
