@@ -52,12 +52,18 @@ def decryptplugin_propagate(
     return decrypted_tokens
 
 
+def make_decryptplugin_propagate() -> DecryptPlugin:
+    return decryptplugin_propagate
+
+
 def decryptplugin_splice(
     matcher: difflib.SequenceMatcher,
     user_tokens: list[str],
     decrypted_tokens: list[str],
     encrypted_tokens: list[str],
     hash_len: Optional[int],
+    max_token_len: int,
+    max_splits_nb: int,
 ) -> list[str]:
     """Fix incorrect user token merging.
 
@@ -94,17 +100,29 @@ def decryptplugin_splice(
         # match the substituted tokens in encrypted_tokens
         tokens_to_split = "".join(user_tokens[j1:j2])
 
+        if len(tokens_to_split) > max_token_len:
+            continue
+
         # we compute the number of substituted tokens: this will be
         # our number of splits
-        sub_len = i2 - i1
+        splits_nb = i2 - i1
 
-        for split in strksplit(tokens_to_split, sub_len):
+        if splits_nb > max_splits_nb:
+            continue
+
+        for split in strksplit(tokens_to_split, splits_nb):
             encrypted_split = encrypt_tokens(split, hash_len=hash_len)
             if encrypted_split == encrypted_tokens[i1:i2]:
                 decrypted_tokens[i1:i2] = split
                 break
 
     return decrypted_tokens
+
+
+def make_decryptplugin_splice(max_token_len: int, max_splits_nb: int) -> DecryptPlugin:
+    return ft.partial(
+        decryptplugin_splice, max_token_len=max_token_len, max_splits_nb=max_splits_nb
+    )
 
 
 def decryptplugin_mlm(
@@ -125,19 +143,18 @@ def decryptplugin_mlm(
     e4    e4
     """
     for tag, i1, i2, j1, j2 in matcher.get_opcodes():
-        # TODO: can we fix replace too??
         if tag == "replace" or tag == "delete":
             # the user did not supply some tokens, or supplied a wrong
             # token. In that case, we try to decode the token using BERT
             for i in range(i2 - i1):
-                X = decrypted_tokens[i1 + i - window : i1 + i + window]
-                assert not "[MASK]" in X
-                X[i1 + i] = "[MASK]"  # mask the central token
+                left = decrypted_tokens[i1 + i - window : i1 + i]
+                right = decrypted_tokens[i1 + i + 1 : i1 + i + window]
+                assert not "[MASK]" in left and not "[MASK]" in right
+                X = left + ["[MASK]"] + right
                 X = " ".join(X)  # pipeline expects a string
                 # pick the probable token whose encrypted form match
                 # the encrypted gold token
                 candidates: list[dict] = pipeline(X)
-                print([c["sequence"] for c in candidates])
                 for cand in candidates:
                     cand = cand["token_str"].strip(" ")
                     encrypted_cand = encrypt_token(cand, hash_len)
