@@ -4,7 +4,7 @@ import sys, os, argparse, difflib
 import functools as ft
 from novelties_bookshare.conll import dump_conll2002_bio, load_conll2002_bio
 from novelties_bookshare.encrypt import encrypt_tokens
-from novelties_bookshare.utils import iterate_pattern
+from novelties_bookshare.utils import strksplit
 
 
 def load_user_tokens(path: Optional[str], **kwargs) -> List[str]:
@@ -21,14 +21,18 @@ def load_user_tokens(path: Optional[str], **kwargs) -> List[str]:
     return user_tokens
 
 
-# matcher, decrypted_tokens, encrypted_tokens
-DecryptPlugin = Callable[[difflib.SequenceMatcher, List[str], List[str]], List[str]]
+# matcher, user_tokens, decrypted_tokens, encrypted_tokens, hash_len
+DecryptPlugin = Callable[
+    [difflib.SequenceMatcher, list[str], list[str], list[str], Optional[int]], list[str]
+]
 
 
 def decryptplugin_propagate(
     matcher: difflib.SequenceMatcher,
-    decrypted_tokens: List[str],
-    encrypted_tokens: List[str],
+    user_tokens: list[str],
+    decrypted_tokens: list[str],
+    encrypted_tokens: list[str],
+    hash_len: Optional[int],
 ) -> List[str]:
     """Propagate previous choices to non-decrypted tokens
 
@@ -49,9 +53,11 @@ def decryptplugin_propagate(
 
 def decryptplugin_splice(
     matcher: difflib.SequenceMatcher,
-    decrypted_tokens: List[str],
-    encrypted_tokens: List[str],
-) -> List[str]:
+    user_tokens: list[str],
+    decrypted_tokens: list[str],
+    encrypted_tokens: list[str],
+    hash_len: Optional[int],
+) -> list[str]:
     """Fix incorrect user token merging.
 
     In the case of a tokenization error, a word can be incorrectly
@@ -59,33 +65,56 @@ def decryptplugin_splice(
 
     .. example::
 
-        ref user
-        --- ----
-        e1  e1
-        e2  e2-e3 < substitution
-        e3  -     < deletion
-        e4  e4
+        ref  user
+        ---  ----
+        e1   e1
+        e2   e2-e3 < substitution
+        e3   -
+        e4   e4
 
-    In that case, we have a substitution + a deletion.  We can try all
-    possible splits of the merged tokens.
+    In that case, we have a substitution.  We can try all possible
+    splits of the merged tokens.  This also works in the reverse case:
+
+    .. example::
+
+        ref  user
+        ---  ----
+        e1    e1
+        e2-e3 e2 < substitution
+        -     e3
+        e4    e4
+
     """
-    opcode_tags = [tag for tag, *_ in matcher.get_opcodes()]
-    # TODO: if n tokens are merged with n>2, we should have n-1
-    # deletions
-    # TODO: deletions can appear before substitution
-    for starti in iterate_pattern(opcode_tags, ["replace", "delete"]):  # delete*
-        ri1, ri2, rj1, rj2 = opcode_tags[starti][1:]
-        di1, di2, dj1, dj2 = opcode_tags[starti][1:]
-        # TODO:
+    for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+        if tag != "replace":
+            continue
+
+        # we will try different splits of the tokens to see if they
+        # match the substituted tokens in encrypted_tokens
+        tokens_to_split = "".join(user_tokens[j1:j2])
+
+        # we compute the number of substituted tokens: this will be
+        # our number of splits
+        sub_len = i2 - i1
+
+        for split in strksplit(tokens_to_split, sub_len):
+            encrypted_split = encrypt_tokens(split, hash_len=hash_len)
+            if encrypted_split == encrypted_tokens[i1:i2]:
+                decrypted_tokens[i1:i2] = split
+                break
+
+    return decrypted_tokens
 
 
 def decryptplugin_mlm(
     matcher: difflib.SequenceMatcher,
-    decrypted_tokens: List[str],
-    encrypted_tokens: List[str],
+    user_tokens: list[str],
+    decrypted_tokens: list[str],
+    encrypted_tokens: list[str],
+    hash_len: Optional[int],
     pipeline,
     window: int,
-) -> List[str]:
+) -> list[str]:
     for tag, i1, i2, j1, j2 in matcher.get_opcodes():
         if tag == "replace" or tag == "delete":
             # the user did not supply some tokens, or supplied a wrong
@@ -114,7 +143,7 @@ def decrypt_tokens(
     user_tokens: List[str],
     hash_len: Optional[int] = None,
     decryption_plugins: Optional[List[DecryptPlugin]] = None,
-) -> List[str]:
+) -> list[str]:
     assert len(encrypted_tokens) == len(tags)
 
     decrypted_tokens = ["[UNK]" for _ in encrypted_tokens]
@@ -131,7 +160,9 @@ def decrypt_tokens(
 
     if not decryption_plugins is None:
         for plugin in decryption_plugins:
-            decrypted_tokens = plugin(matcher, decrypted_tokens, encrypted_tokens)
+            decrypted_tokens = plugin(
+                matcher, user_tokens, decrypted_tokens, encrypted_tokens, hash_len
+            )
 
     assert len(decrypted_tokens) == len(encrypted_tokens)
     return decrypted_tokens
