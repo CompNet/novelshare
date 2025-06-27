@@ -89,20 +89,11 @@ def main(
     novelties_path = novelties_path.expanduser()
 
     corpus = [
-        # novelties_path / "1984",
-        # novelties_path / "Bel_Ami",
         novelties_path / "Brave_New_World",
-        # novelties_path / "Eugenie_Grandet/en",
-        # novelties_path / "Germinal/en",
-        # novelties_path / "Madame_Bovary/en",
-        # novelties_path / "Moby_Dick",
         novelties_path / "The_Black_Company",
         novelties_path / "The_Blade_Itself",
         novelties_path / "The_Colour_Of_Magic",
-        # novelties_path / "The_Hunchback_of_Notre-Dame/en",
         novelties_path / "The_Light_Fantastic",
-        # novelties_path / "The_Red_And_The_Black",
-        # novelties_path / "The_Three_Musketeers/en",
     ]
 
     strategies = [
