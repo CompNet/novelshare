@@ -2,7 +2,6 @@
 from typing import Callable, List, Optional
 import sys, os, argparse, difflib
 import functools as ft
-from novelties_bookshare import encrypt
 from novelties_bookshare.conll import dump_conll2002_bio, load_conll2002_bio
 from novelties_bookshare.encrypt import encrypt_token, encrypt_tokens
 from novelties_bookshare.utils import strksplit
