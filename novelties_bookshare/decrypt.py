@@ -216,7 +216,6 @@ def plugin_cycle(
         should_restart = False
 
         for plugin in plugins:
-            # print(f"calling {plugin}...")
             decrypted_tokens = plugin(
                 matcher, user_tokens, decrypted_tokens, encrypted_tokens, hash_len
             )
@@ -230,7 +229,6 @@ def plugin_cycle(
             if not budget is None and plugin_calls_nb == budget:
                 return decrypted_tokens
 
-            # print("scoring...")
             errors = sum(
                 1 if ref != pred else 0
                 for ref, pred in zip(
@@ -238,7 +236,6 @@ def plugin_cycle(
                     encrypt_tokens(decrypted_tokens, hash_len=hash_len),
                 )
             )
-            # print(errors)
             if errors < lowest_errors:
                 lowest_errors = errors
                 should_restart = True
