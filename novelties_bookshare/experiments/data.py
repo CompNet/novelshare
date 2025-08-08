@@ -6,6 +6,7 @@ from novelties_bookshare.conll import load_conll2002_bio
 def load_book(path: pl.Path | str) -> tuple[list[str], list[str]]:
     if isinstance(path, str):
         path = pl.Path(path)
+    path = path.expanduser()
 
     tokens = []
     tags = []
