@@ -1,6 +1,6 @@
 from typing import List
 from novelties_bookshare.encrypt import encrypt_tokens
-from novelties_bookshare.decrypt import decrypt_tokens, decryptplugin_propagate
+from novelties_bookshare.decrypt import decrypt_tokens, plugin_propagate
 from hypothesis import given, strategies as st
 
 
@@ -20,7 +20,7 @@ def test_substitution_propagate():
         encrypt_tokens(ref_tokens),
         tags,
         user_tokens,
-        decryption_plugins=[decryptplugin_propagate],
+        decryption_plugins=[plugin_propagate],
     )
     assert pred_tokens == ref_tokens
 

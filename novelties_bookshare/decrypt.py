@@ -27,7 +27,7 @@ DecryptPlugin = Callable[
 ]
 
 
-def decryptplugin_propagate(
+def plugin_propagate(
     matcher: difflib.SequenceMatcher,
     user_tokens: list[str],
     decrypted_tokens: list[str],
@@ -51,11 +51,11 @@ def decryptplugin_propagate(
     return decrypted_tokens
 
 
-def make_decryptplugin_propagate() -> DecryptPlugin:
-    return decryptplugin_propagate
+def make_plugin_propagate() -> DecryptPlugin:
+    return plugin_propagate
 
 
-def decryptplugin_splice(
+def plugin_splice(
     matcher: difflib.SequenceMatcher,
     user_tokens: list[str],
     decrypted_tokens: list[str],
@@ -118,13 +118,13 @@ def decryptplugin_splice(
     return decrypted_tokens
 
 
-def make_decryptplugin_splice(max_token_len: int, max_splits_nb: int) -> DecryptPlugin:
+def make_plugin_splice(max_token_len: int, max_splits_nb: int) -> DecryptPlugin:
     return ft.partial(
-        decryptplugin_splice, max_token_len=max_token_len, max_splits_nb=max_splits_nb
+        plugin_splice, max_token_len=max_token_len, max_splits_nb=max_splits_nb
     )
 
 
-def decryptplugin_mlm(
+def plugin_mlm(
     matcher: difflib.SequenceMatcher,
     user_tokens: list[str],
     decrypted_tokens: list[str],
@@ -163,11 +163,11 @@ def decryptplugin_mlm(
     return decrypted_tokens
 
 
-def make_decryptplugin_mlm(model: str, window: int) -> DecryptPlugin:
+def make_plugin_mlm(model: str, window: int) -> DecryptPlugin:
     from transformers import pipeline
 
     return ft.partial(
-        decryptplugin_mlm, pipeline=pipeline("fill-mask", model=model), window=window
+        plugin_mlm, pipeline=pipeline("fill-mask", model=model), window=window
     )
 
 

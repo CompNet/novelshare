@@ -13,9 +13,9 @@ from sacred.run import Run
 from sacred.utils import apply_backspaces_and_linefeeds
 from novelties_bookshare.encrypt import encrypt_tokens
 from novelties_bookshare.decrypt import (
-    make_decryptplugin_mlm,
-    make_decryptplugin_propagate,
-    make_decryptplugin_splice,
+    make_plugin_mlm,
+    make_plugin_propagate,
+    make_plugin_splice,
 )
 from novelties_bookshare.decrypt import decrypt_tokens
 from novelties_bookshare.experiments.data import load_book
@@ -100,16 +100,14 @@ def main(
         Strategy("naive", decrypt_tokens),
         Strategy(
             "propagate",
-            ft.partial(
-                decrypt_tokens, decryption_plugins=[make_decryptplugin_propagate()]
-            ),
+            ft.partial(decrypt_tokens, decryption_plugins=[make_plugin_propagate()]),
         ),
         Strategy(
             "splice",
             ft.partial(
                 decrypt_tokens,
                 decryption_plugins=[
-                    make_decryptplugin_splice(max_token_len=24, max_splits_nb=4)
+                    make_plugin_splice(max_token_len=24, max_splits_nb=4)
                 ],
             ),
         ),
@@ -118,7 +116,7 @@ def main(
             ft.partial(
                 decrypt_tokens,
                 decryption_plugins=[
-                    make_decryptplugin_mlm("answerdotai/ModernBERT-base", window=16)
+                    make_plugin_mlm("answerdotai/ModernBERT-base", window=16)
                 ],
             ),
         ),
@@ -127,9 +125,9 @@ def main(
             ft.partial(
                 decrypt_tokens,
                 decryption_plugins=[
-                    make_decryptplugin_splice(max_token_len=24, max_splits_nb=4),
-                    make_decryptplugin_mlm("answerdotai/ModernBERT-base", window=16),
-                    make_decryptplugin_propagate(),
+                    make_plugin_splice(max_token_len=24, max_splits_nb=4),
+                    make_plugin_mlm("answerdotai/ModernBERT-base", window=16),
+                    make_plugin_propagate(),
                 ],
             ),
         ),
