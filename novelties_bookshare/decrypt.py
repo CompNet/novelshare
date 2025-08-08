@@ -200,6 +200,59 @@ def make_plugin_case() -> DecryptPlugin:
     return plugin_case
 
 
+def plugin_cycle(
+    matcher: difflib.SequenceMatcher,
+    user_tokens: list[str],
+    decrypted_tokens: list[str],
+    encrypted_tokens: list[str],
+    hash_len: Optional[int],
+    plugins: list[DecryptPlugin],
+    budget: Optional[int] = None,
+) -> list[str]:
+    plugin_calls_nb = 0
+    lowest_errors = float("inf")
+    should_restart = True
+    while should_restart:
+        should_restart = False
+
+        for plugin in plugins:
+            # print(f"calling {plugin}...")
+            decrypted_tokens = plugin(
+                matcher, user_tokens, decrypted_tokens, encrypted_tokens, hash_len
+            )
+            matcher = difflib.SequenceMatcher(
+                None,
+                encrypted_tokens,
+                encrypt_tokens(decrypted_tokens, hash_len=hash_len),
+            )
+            plugin_calls_nb += 1
+
+            if not budget is None and plugin_calls_nb == budget:
+                return decrypted_tokens
+
+            # print("scoring...")
+            errors = sum(
+                1 if ref != pred else 0
+                for ref, pred in zip(
+                    encrypted_tokens,
+                    encrypt_tokens(decrypted_tokens, hash_len=hash_len),
+                )
+            )
+            # print(errors)
+            if errors < lowest_errors:
+                lowest_errors = errors
+                should_restart = True
+                break
+
+    return decrypted_tokens
+
+
+def make_plugin_cycle(
+    plugins: list[DecryptPlugin], budget: Optional[int] = None
+) -> DecryptPlugin:
+    return ft.partial(plugin_cycle, plugins=plugins, budget=budget)
+
+
 def decrypt_tokens(
     encrypted_tokens: list,
     tags: List[str],
@@ -223,6 +276,11 @@ def decrypt_tokens(
 
     if not decryption_plugins is None:
         for plugin in decryption_plugins:
+            matcher = difflib.SequenceMatcher(
+                None,
+                encrypted_tokens,
+                encrypt_tokens(decrypted_tokens, hash_len=hash_len),
+            )
             decrypted_tokens = plugin(
                 matcher, user_tokens, decrypted_tokens, encrypted_tokens, hash_len
             )

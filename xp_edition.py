@@ -12,6 +12,7 @@ from novelties_bookshare.decrypt import (
     make_plugin_propagate,
     make_plugin_split,
     make_plugin_case,
+    make_plugin_cycle,
 )
 from novelties_bookshare.experiments.data import load_book
 from tqdm import tqdm
@@ -72,12 +73,16 @@ def main(_run: Run, novelties_path: str, edition_set: str):
         "propagate": [make_plugin_propagate()],
         "splice": [make_plugin_split(max_token_len=24, max_splits_nb=4)],
         "bert": [make_plugin_mlm("answerdotai/ModernBERT-base", window=16)],
-        "pipe": [
-            make_plugin_case(),
-            make_plugin_propagate(),
-            make_plugin_mlm("answerdotai/ModernBERT-base", window=16),
-            make_plugin_split(max_token_len=24, max_splits_nb=4),
-            make_plugin_propagate(),
+        "cycle": [
+            make_plugin_cycle(
+                [
+                    make_plugin_propagate(),
+                    make_plugin_case(),
+                    make_plugin_split(max_token_len=24, max_splits_nb=4),
+                    make_plugin_mlm("answerdotai/ModernBERT-base", window=16),
+                ],
+                budget=None,
+            )
         ],
     }
     # { strategy => { edition => { token => number of error } } }

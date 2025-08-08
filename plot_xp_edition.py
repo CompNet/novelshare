@@ -35,5 +35,7 @@ if __name__ == "__main__":
     df = df.pivot(index="edition", columns="strategy", values="error_nb")
     df = df.reset_index().set_index("edition")
     df = df[df.mean().sort_values(ascending=False).index]
-    df.plot.bar()
+    ax = df.plot.bar()
+    for p in ax.patches:
+        ax.annotate(str(p.get_height()), (p.get_x() * 1.005, p.get_height() * 1.005))
     plt.show()
