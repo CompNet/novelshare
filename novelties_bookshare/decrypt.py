@@ -171,6 +171,35 @@ def make_plugin_mlm(model: str, window: int) -> DecryptPlugin:
     )
 
 
+def plugin_case(
+    matcher: difflib.SequenceMatcher,
+    user_tokens: list[str],
+    decrypted_tokens: list[str],
+    encrypted_tokens: list[str],
+    hash_len: Optional[int],
+) -> list[str]:
+    """Fix incorrect user token casing."""
+    for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+        if tag != "replace":
+            continue
+
+        for k, (user_token, encrypted_token) in enumerate(
+            zip(user_tokens[j1:j2], encrypted_tokens[i1:i2])
+        ):
+            for casing in [str.lower, str.upper, str.capitalize]:
+                encrypted_user_token = encrypt_token(
+                    casing(user_token), hash_len=hash_len
+                )
+                if encrypted_user_token == encrypted_token:
+                    decrypted_tokens[i1 + k] = user_token
+
+    return decrypted_tokens
+
+
+def make_plugin_case() -> DecryptPlugin:
+    return plugin_case
+
+
 def decrypt_tokens(
     encrypted_tokens: list,
     tags: List[str],
