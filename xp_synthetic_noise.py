@@ -89,11 +89,11 @@ def main(
     novelties_path = novelties_path.expanduser()
 
     corpus = [
-        novelties_path / "Brave_New_World",
-        novelties_path / "The_Black_Company",
-        novelties_path / "The_Blade_Itself",
-        novelties_path / "The_Colour_Of_Magic",
-        novelties_path / "The_Light_Fantastic",
+        novelties_path / "corpus" / "Brave_New_World",
+        novelties_path / "corpus" / "The_Black_Company",
+        novelties_path / "corpus" / "The_Blade_Itself",
+        novelties_path / "corpus" / "The_Colour_Of_Magic",
+        novelties_path / "corpus" / "The_Light_Fantastic",
     ]
 
     strategies = [
