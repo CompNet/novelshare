@@ -55,7 +55,7 @@ def make_plugin_propagate() -> DecryptPlugin:
     return plugin_propagate
 
 
-def plugin_splice(
+def plugin_split(
     matcher: difflib.SequenceMatcher,
     user_tokens: list[str],
     decrypted_tokens: list[str],
@@ -118,9 +118,9 @@ def plugin_splice(
     return decrypted_tokens
 
 
-def make_plugin_splice(max_token_len: int, max_splits_nb: int) -> DecryptPlugin:
+def make_plugin_split(max_token_len: int, max_splits_nb: int) -> DecryptPlugin:
     return ft.partial(
-        plugin_splice, max_token_len=max_token_len, max_splits_nb=max_splits_nb
+        plugin_split, max_token_len=max_token_len, max_splits_nb=max_splits_nb
     )
 
 

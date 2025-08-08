@@ -10,7 +10,7 @@ from novelties_bookshare.decrypt import (
     decrypt_tokens,
     make_plugin_mlm,
     make_plugin_propagate,
-    make_plugin_splice,
+    make_plugin_split,
 )
 from novelties_bookshare.experiments.data import load_book
 from tqdm import tqdm
@@ -68,12 +68,12 @@ def main(_run: Run, novelties_path: str, edition_set: str):
     strategies = {
         "naive": None,
         "propagate": [make_plugin_propagate()],
-        "splice": [make_plugin_splice(max_token_len=24, max_splits_nb=4)],
+        "splice": [make_plugin_split(max_token_len=24, max_splits_nb=4)],
         "bert": [make_plugin_mlm("answerdotai/ModernBERT-base", window=16)],
         "pipe": [
             make_plugin_propagate(),
             make_plugin_mlm("answerdotai/ModernBERT-base", window=16),
-            make_plugin_splice(max_token_len=24, max_splits_nb=4),
+            make_plugin_split(max_token_len=24, max_splits_nb=4),
             make_plugin_propagate(),
         ],
     }
