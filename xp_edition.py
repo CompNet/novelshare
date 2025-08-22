@@ -35,12 +35,14 @@ EDITION_SETS = {
 def config():
     novelties_path: str
     edition_set: str
+    hash_len: int = 64
 
 
 @ex.automain
-def main(_run: Run, novelties_path: str, edition_set: str):
+def main(_run: Run, novelties_path: str, edition_set: str, hash_len: int):
     print_config(_run)
     assert edition_set in EDITION_SETS
+    assert hash_len > 0 and hash_len <= 64
 
     novelties_tokens, novelties_tags = load_book(
         pl.Path(novelties_path).expanduser() / "corpus" / edition_set
@@ -65,7 +67,7 @@ def main(_run: Run, novelties_path: str, edition_set: str):
         normalize_(tokens, [(["…"], "...")])
         normalize_(tokens, [(["—"], "-")])
 
-    novelties_encrypted_tokens = encrypt_tokens(novelties_tokens)
+    novelties_encrypted_tokens = encrypt_tokens(novelties_tokens, hash_len=hash_len)
 
     strategies = {
         "naive": None,
@@ -108,7 +110,7 @@ def main(_run: Run, novelties_path: str, edition_set: str):
                 novelties_encrypted_tokens,
                 novelties_tags,
                 user_tokens,
-                hash_len=None,
+                hash_len=hash_len,
                 decryption_plugins=strat_plugins,
             )
             local_errors_nb = sum(
