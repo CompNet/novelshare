@@ -1,0 +1,93 @@
+import pathlib as pl
+from collections import defaultdict
+from sacred import Experiment
+from sacred.observers import FileStorageObserver
+from sacred.commands import print_config
+from sacred.run import Run
+from sacred.utils import apply_backspaces_and_linefeeds
+from novelties_bookshare.encrypt import encrypt_tokens
+from novelties_bookshare.decrypt import decrypt_tokens, make_plugin_mlm
+from novelties_bookshare.experiments.data import load_book
+from tqdm import tqdm
+
+ex = Experiment()
+ex.captured_out_filter = apply_backspaces_and_linefeeds  # type: ignore
+ex.observers.append(FileStorageObserver("runs"))
+
+EDITION_SETS = {
+    "Brave_New_World": {
+        "HC98": "./data/editions_diff/Brave_New_World/HC98",
+        "HC06": "./data/editions_diff/Brave_New_World/HC06",
+        "HC04": "./data/editions_diff/Brave_New_World/HC04",
+        "RB06": "./data/editions_diff/Brave_New_World/RB06",
+    }
+}
+
+
+@ex.config
+def config():
+    novelties_path: str
+    edition_set: str
+    window_range: list[int]
+    hash_len: int = 64
+
+
+@ex.automain
+def main(
+    _run: Run,
+    novelties_path: str,
+    edition_set: str,
+    window_range: list[int],
+    hash_len: int,
+):
+    print_config(_run)
+    assert edition_set in EDITION_SETS
+    assert hash_len > 0 and hash_len <= 64
+
+    novelties_tokens, novelties_tags = load_book(
+        pl.Path(novelties_path).expanduser() / "corpus" / edition_set
+    )
+
+    wild_editions = {
+        key: load_book(path)[0] for key, path in EDITION_SETS[edition_set].items()
+    }
+
+    def normalize_(tokens: list[str], replacements: list[tuple[list[str], str]]):
+        for i, token in enumerate(tokens):
+            for repl_source, repl_target in replacements:
+                if token in repl_source:
+                    tokens[i] = repl_target
+
+    # OPTIONAL: preprocessing
+    normalize_(novelties_tokens, [(["``", "''"], '"')])
+    normalize_(novelties_tokens, [(["…"], "...")])
+    for tokens in wild_editions.values():
+        normalize_(tokens, [(["``", "''", "“", "”"], '"')])
+        normalize_(tokens, [(["‘", "’"], "'")])
+        normalize_(tokens, [(["…"], "...")])
+        normalize_(tokens, [(["—"], "-")])
+
+    novelties_encrypted_tokens = encrypt_tokens(novelties_tokens, hash_len=hash_len)
+
+    progress = tqdm(total=len(wild_editions) * len(window_range), ascii=True)
+
+    for edition, user_tokens in wild_editions.items():
+        for window in window_range:
+            progress.set_description(f"{edition}.w={window}")
+
+            mlm = make_plugin_mlm("answerdotai/ModernBERT-base", window)
+            decrypted_tokens = decrypt_tokens(
+                novelties_encrypted_tokens,
+                novelties_tags,
+                user_tokens,
+                hash_len=hash_len,
+                decryption_plugins=[mlm],
+            )
+            local_errors_nb = sum(
+                1 if ref != pred else 0
+                for ref, pred in zip(novelties_tokens, decrypted_tokens)
+            )
+            setup_name = f"w={window}.e={edition}"
+            _run.log_scalar(f"{setup_name}.errors_nb", local_errors_nb)
+
+            progress.update()
