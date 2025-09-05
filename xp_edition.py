@@ -1,4 +1,5 @@
 import pathlib as pl
+import time
 from collections import defaultdict
 from sacred import Experiment
 from sacred.observers import FileStorageObserver
@@ -76,7 +77,6 @@ def main(_run: Run, novelties_path: str, edition_set: str, hash_len: int):
         "splice": [make_plugin_split(max_token_len=24, max_splits_nb=4)],
         "bert": [make_plugin_mlm("answerdotai/ModernBERT-base", window=16)],
         "pipe": [
-            make_plugin_propagate(),
             make_plugin_case(),
             make_plugin_split(max_token_len=24, max_splits_nb=4),
             make_plugin_mlm("answerdotai/ModernBERT-base", window=16),
@@ -85,10 +85,10 @@ def main(_run: Run, novelties_path: str, edition_set: str, hash_len: int):
         "cycle": [
             make_plugin_cycle(
                 [
-                    make_plugin_propagate(),
                     make_plugin_case(),
                     make_plugin_split(max_token_len=24, max_splits_nb=4),
                     make_plugin_mlm("answerdotai/ModernBERT-base", window=16),
+                    make_plugin_propagate(),
                 ],
                 budget=None,
             )
@@ -106,6 +106,7 @@ def main(_run: Run, novelties_path: str, edition_set: str, hash_len: int):
         for strat, strat_plugins in strategies.items():
             progress.set_description(f"{edition}.{strat}")
 
+            t0 = time.process_time()
             decrypted_tokens = decrypt_tokens(
                 novelties_encrypted_tokens,
                 novelties_tags,
@@ -113,12 +114,14 @@ def main(_run: Run, novelties_path: str, edition_set: str, hash_len: int):
                 hash_len=hash_len,
                 decryption_plugins=strat_plugins,
             )
+            t1 = time.process_time()
             local_errors_nb = sum(
                 1 if ref != pred else 0
                 for ref, pred in zip(novelties_tokens, decrypted_tokens)
             )
             setup_name = f"s={strat}.e={edition}"
             _run.log_scalar(f"{setup_name}.errors_nb", local_errors_nb)
+            _run.log_scalar(f"{setup_name}.duration_s", t1 - t0)
 
             for ref, pred in zip(novelties_tokens, decrypted_tokens):
                 if ref != pred:
