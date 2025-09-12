@@ -1,3 +1,4 @@
+from typing import Optional
 import time
 from sacred import Experiment
 from sacred.observers import FileStorageObserver
@@ -35,6 +36,7 @@ def config():
     edition_set: str
     window_range: list[int]
     hash_len: int = 64
+    chapter_limit: Optional[int] = None
 
 
 @ex.automain
@@ -43,15 +45,18 @@ def main(
     edition_set: str,
     window_range: list[int],
     hash_len: int,
+    chapter_limit: Optional[int],
 ):
     print_config(_run)
     assert edition_set in EDITION_SETS
     assert hash_len > 0 and hash_len <= 64
 
-    novelties_tokens, novelties_tags = load_book(EDITION_SETS[edition_set]["Novelties"])
+    novelties_tokens, novelties_tags = load_book(
+        EDITION_SETS[edition_set]["Novelties"], chapter_limit=chapter_limit
+    )
 
     wild_editions = {
-        key: load_book(path)[0]
+        key: load_book(path, chapter_limit=chapter_limit)[0]
         for key, path in EDITION_SETS[edition_set].items()
         if key != "Novelties"
     }
