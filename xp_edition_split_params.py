@@ -5,10 +5,11 @@ from sacred.observers import FileStorageObserver
 from sacred.commands import print_config
 from sacred.run import Run
 from sacred.utils import apply_backspaces_and_linefeeds
+from tqdm import tqdm
 from novelties_bookshare.encrypt import encrypt_tokens
 from novelties_bookshare.decrypt import decrypt_tokens, make_plugin_split
 from novelties_bookshare.experiments.data import load_book
-from tqdm import tqdm
+from novelties_bookshare.experiments.metrics import record_decryption_metrics_
 
 ex = Experiment()
 ex.captured_out_filter = apply_backspaces_and_linefeeds  # type: ignore
@@ -104,12 +105,15 @@ def main(
                     decryption_plugins=[split],
                 )
                 t1 = time.process_time()
-                local_errors_nb = sum(
-                    1 if ref != pred else 0
-                    for ref, pred in zip(novelties_tokens, decrypted_tokens)
-                )
+
                 setup_name = f"t={max_token_len}.s={max_split_nb}.e={edition}"
-                _run.log_scalar(f"{setup_name}.errors_nb", local_errors_nb)
-                _run.log_scalar(f"{setup_name}.duration_s", t1 - t0)
+                record_decryption_metrics_(
+                    _run,
+                    setup_name,
+                    novelties_tokens,
+                    decrypted_tokens,
+                    novelties_tags,
+                    t1 - t0,
+                )
 
                 progress.update()

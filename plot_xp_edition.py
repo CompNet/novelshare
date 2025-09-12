@@ -6,33 +6,50 @@ import numpy as np
 import pandas as pd
 
 
-def get_params(metric_key: str) -> dict[str, str]:
+def get_params(metric_key: str) -> tuple[str, dict[str, str]]:
     # form of each metric
     # s=strat.e=edition.error_nb
-    m = re.match(r"s=([^\.]+)\.e=([^\.]+)\..*", metric_key)
+    m = re.match(r"s=([^\.]+)\.e=([^\.]+)\.(.*)", metric_key)
     if m is None:
-        return {}
-    strat, edition = m.groups()
-    return {"strat": strat, "edition": edition}
+        return "", {}
+    strat, edition, metric_name = m.groups()
+    return metric_name, {"strategy": strat, "edition": edition}
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-r", "--run", type=pl.Path)
+    parser.add_argument(
+        "-m",
+        "--metric",
+        type=str,
+        help="one of: 'errors_nb', 'duration_s', 'errors_percent', 'entity_errors_nb', 'entity_errors_percent'",
+    )
     parser.add_argument("-o", "--output-dir", type=pl.Path)
     args = parser.parse_args()
 
     df_dict = defaultdict(list)
     with open(args.run / "metrics.json") as f:
         data = json.load(f)
+
+        lines = defaultdict(dict)
         for key, metric_dict in data.items():
-            params = get_params(key)
-            df_dict["strategy"].append(params["strat"])
-            df_dict["edition"].append(params["edition"])
-            df_dict["error_nb"].append(metric_dict["values"][0])
+            metric_name, params = get_params(key)
+            params_key = (
+                params["strategy"],
+                params["edition"],
+            )
+            lines[params_key][metric_name] = metric_dict["values"][0]
+
+        for (strat, edition), metric_dict in lines.items():
+            df_dict["strategy"].append(strat)
+            df_dict["edition"].append(edition)
+            for key, value in metric_dict.items():
+                df_dict[key].append(value)
+
     df = pd.DataFrame(df_dict)
 
-    df = df.pivot(index="edition", columns="strategy", values="error_nb")
+    df = df.pivot(index="edition", columns="strategy", values=args.metric)
     df = df.reset_index().set_index("edition")
     df = df[df.mean().sort_values(ascending=False).index]
     ax = df.plot.bar()

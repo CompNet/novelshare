@@ -39,7 +39,7 @@ if __name__ == "__main__":
     with open(args.run / "metrics.json") as f:
         data = json.load(f)
 
-        lines = {}
+        lines = defaultdict(dict)
         for key, metric_dict in data.items():
             metric_name, params = get_params(key)
             lines[(params["window"], params["edition"])][metric_name] = metric_dict[

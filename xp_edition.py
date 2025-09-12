@@ -1,6 +1,5 @@
 from typing import Optional
 import time
-from collections import defaultdict
 from sacred import Experiment
 from sacred.observers import FileStorageObserver
 from sacred.commands import print_config
@@ -16,6 +15,7 @@ from novelties_bookshare.decrypt import (
     make_plugin_cycle,
 )
 from novelties_bookshare.experiments.data import load_book
+from novelties_bookshare.experiments.metrics import record_decryption_metrics_, errors
 from tqdm import tqdm
 
 ex = Experiment()
@@ -105,10 +105,9 @@ def main(_run: Run, edition_set: str, hash_len: int, chapter_limit: Optional[int
             )
         ],
     }
-    # { strategy => { edition => { token => number of error } } }
-    errors = {
-        strat: {ed: defaultdict(int) for ed in wild_editions.keys()}
-        for strat in strategies.keys()
+    # { strategy => { edition => { ref_token => [ incorrect pred tokens ] } } }
+    all_errors = {
+        strat: {ed: {} for ed in wild_editions.keys()} for strat in strategies.keys()
     }
 
     progress = tqdm(total=len(wild_editions) * len(strategies), ascii=True)
@@ -126,18 +125,18 @@ def main(_run: Run, edition_set: str, hash_len: int, chapter_limit: Optional[int
                 decryption_plugins=strat_plugins,
             )
             t1 = time.process_time()
-            local_errors_nb = sum(
-                1 if ref != pred else 0
-                for ref, pred in zip(novelties_tokens, decrypted_tokens)
-            )
-            setup_name = f"s={strat}.e={edition}"
-            _run.log_scalar(f"{setup_name}.errors_nb", local_errors_nb)
-            _run.log_scalar(f"{setup_name}.duration_s", t1 - t0)
 
-            for ref, pred in zip(novelties_tokens, decrypted_tokens):
-                if ref != pred:
-                    errors[strat][edition][ref] += 1
+            setup_name = f"s={strat}.e={edition}"
+            record_decryption_metrics_(
+                _run,
+                setup_name,
+                novelties_tokens,
+                decrypted_tokens,
+                novelties_tags,
+                t1 - t0,
+            )
+            all_errors[strat][edition] = errors(novelties_tokens, decrypted_tokens)
 
             progress.update()
 
-    _run.info["errors"] = errors
+    _run.info["errors"] = all_errors
