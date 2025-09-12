@@ -5,7 +5,7 @@ from sacred.commands import print_config
 from sacred.run import Run
 from sacred.utils import apply_backspaces_and_linefeeds
 from novelties_bookshare.encrypt import encrypt_tokens
-from novelties_bookshare.decrypt import decrypt_tokens, make_plugin_mlm
+from novelties_bookshare.decrypt import decrypt_tokens, make_plugin_split
 from novelties_bookshare.experiments.data import load_book
 from tqdm import tqdm
 
@@ -33,7 +33,8 @@ EDITION_SETS = {
 @ex.config
 def config():
     edition_set: str
-    window_range: list[int]
+    max_token_len_range: list[int]
+    max_splits_nb_range: list[int]
     hash_len: int = 64
 
 
@@ -41,7 +42,8 @@ def config():
 def main(
     _run: Run,
     edition_set: str,
-    window_range: list[int],
+    max_token_len_range: list[int],
+    max_splits_nb_range: list[int],
     hash_len: int,
 ):
     print_config(_run)
@@ -75,28 +77,34 @@ def main(
 
     novelties_encrypted_tokens = encrypt_tokens(novelties_tokens, hash_len=hash_len)
 
-    progress = tqdm(total=len(wild_editions) * len(window_range), ascii=True)
+    progress = tqdm(
+        total=len(wild_editions) * len(max_token_len_range) * len(max_splits_nb_range),
+        ascii=True,
+    )
 
     for edition, user_tokens in wild_editions.items():
-        for window in window_range:
-            progress.set_description(f"{edition}.w={window}")
+        for max_token_len in max_token_len_range:
+            for max_split_nb in max_splits_nb_range:
+                progress.set_description(
+                    f"{edition}.t={max_token_len}.s={max_split_nb}"
+                )
 
-            mlm = make_plugin_mlm("answerdotai/ModernBERT-base", window)
-            t0 = time.process_time()
-            decrypted_tokens = decrypt_tokens(
-                novelties_encrypted_tokens,
-                novelties_tags,
-                user_tokens,
-                hash_len=hash_len,
-                decryption_plugins=[mlm],
-            )
-            t1 = time.process_time()
-            local_errors_nb = sum(
-                1 if ref != pred else 0
-                for ref, pred in zip(novelties_tokens, decrypted_tokens)
-            )
-            setup_name = f"w={window}.e={edition}"
-            _run.log_scalar(f"{setup_name}.errors_nb", local_errors_nb)
-            _run.log_scalar(f"{setup_name}.duration_s", t1 - t0)
+                split = make_plugin_split(max_token_len, max_split_nb)
+                t0 = time.process_time()
+                decrypted_tokens = decrypt_tokens(
+                    novelties_encrypted_tokens,
+                    novelties_tags,
+                    user_tokens,
+                    hash_len=hash_len,
+                    decryption_plugins=[split],
+                )
+                t1 = time.process_time()
+                local_errors_nb = sum(
+                    1 if ref != pred else 0
+                    for ref, pred in zip(novelties_tokens, decrypted_tokens)
+                )
+                setup_name = f"t={max_token_len}.s={max_split_nb}.e={edition}"
+                _run.log_scalar(f"{setup_name}.errors_nb", local_errors_nb)
+                _run.log_scalar(f"{setup_name}.duration_s", t1 - t0)
 
-            progress.update()
+                progress.update()

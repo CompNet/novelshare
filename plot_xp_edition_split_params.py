@@ -8,12 +8,16 @@ import pandas as pd
 
 def get_params(metric_key: str) -> tuple[str, dict[str, str]]:
     # form of each metric
-    # w=window.e=edition.metric_name
-    m = re.match(r"w=([^\.]+)\.e=([^\.]+)\.(.*)", metric_key)
+    # t=max_token_len.s=max_split_nb.e=edition.metric_name
+    m = re.match(r"t=([^\.]+)\.s=([^\.]+)\.e=([^\.]+)\.(.*)", metric_key)
     if m is None:
         return "", {}
-    window, edition, metric_name = m.groups()
-    return metric_name, {"window": window, "edition": edition}
+    max_token_len, max_split_nb, edition, metric_name = m.groups()
+    return metric_name, {
+        "max_token_len": max_token_len,
+        "max_split_nb": max_split_nb,
+        "edition": edition,
+    }
 
 
 def pformat_number(number) -> str:
@@ -42,19 +46,27 @@ if __name__ == "__main__":
         lines = {}
         for key, metric_dict in data.items():
             metric_name, params = get_params(key)
+            params_key = (
+                params["max_token_len"],
+                params["max_split_nb"],
+                params["edition"],
+            )
             lines[(params["window"], params["edition"])][metric_name] = metric_dict[
                 "values"
             ][0]
 
-        for (window, edition), metric_dict in lines.items():
-            df_dict["window"].append(window)
+        for (max_token_len, max_split_nb, edition), metric_dict in lines.items():
+            df_dict["max_token_len"].append(max_token_len)
+            df_dict["max_split_nb"].append(max_split_nb)
             df_dict["edition"].append(edition)
             for key, value in metric_dict.items():
                 df_dict[key].append(value)
 
     df = pd.DataFrame(df_dict)
 
-    df = df.pivot(index="edition", columns="window", values=args.metric)
+    df = df.pivot(
+        index="edition", columns=["max_token_len", "max_split_nb"], values=args.metric
+    )
     df = df.reset_index().set_index("edition")
     df = df[df.mean().sort_values(ascending=False).index]
     ax = df.plot.bar()
