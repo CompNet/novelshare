@@ -24,33 +24,39 @@ ex.observers.append(FileStorageObserver("runs"))
 
 EDITION_SETS = {
     "Brave_New_World": {
+        "Novelties": "./data/editions_diff/Brave_New_World/Novelties",
         "HC98": "./data/editions_diff/Brave_New_World/HC98",
         "HC06": "./data/editions_diff/Brave_New_World/HC06",
         "HC04": "./data/editions_diff/Brave_New_World/HC04",
         "RB06": "./data/editions_diff/Brave_New_World/RB06",
-    }
+    },
+    "Moby_Dick": {
+        "Novelties": "./data/editions_diff/Moby_Dick/Novelties",
+        "PG15": "./data/editions_diff/Moby_Dick/PG15",
+        "PG2489": "./data/editions_diff/Moby_Dick/PG2489",
+        "PG2701": "./data/editions_diff/Moby_Dick/PG2701",
+    },
 }
 
 
 @ex.config
 def config():
-    novelties_path: str
     edition_set: str
     hash_len: int = 64
 
 
 @ex.automain
-def main(_run: Run, novelties_path: str, edition_set: str, hash_len: int):
+def main(_run: Run, edition_set: str, hash_len: int):
     print_config(_run)
     assert edition_set in EDITION_SETS
     assert hash_len > 0 and hash_len <= 64
 
-    novelties_tokens, novelties_tags = load_book(
-        pl.Path(novelties_path).expanduser() / "corpus" / edition_set
-    )
+    novelties_tokens, novelties_tags = load_book(EDITION_SETS[edition_set]["Novelties"])
 
     wild_editions = {
-        key: load_book(path)[0] for key, path in EDITION_SETS[edition_set].items()
+        key: load_book(path)[0]
+        for key, path in EDITION_SETS[edition_set].items()
+        if key != "Novelties"
     }
 
     def normalize_(tokens: list[str], replacements: list[tuple[list[str], str]]):
@@ -59,9 +65,11 @@ def main(_run: Run, novelties_path: str, edition_set: str, hash_len: int):
                 if token in repl_source:
                     tokens[i] = repl_target
 
-    # OPTIONAL: preprocessing
-    normalize_(novelties_tokens, [(["``", "''"], '"')])
+    # preprocessing
+    normalize_(novelties_tokens, [(["``", "''", "“", "”"], '"')])
+    normalize_(novelties_tokens, [(["‘", "’"], "'")])
     normalize_(novelties_tokens, [(["…"], "...")])
+    normalize_(novelties_tokens, [(["—"], "-")])
     for tokens in wild_editions.values():
         normalize_(tokens, [(["``", "''", "“", "”"], '"')])
         normalize_(tokens, [(["‘", "’"], "'")])
