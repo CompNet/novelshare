@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Literal, Optional
 import time
 from sacred import Experiment
 from sacred.observers import FileStorageObserver
@@ -44,10 +44,17 @@ def config():
     edition_set: str
     hash_len: int = 64
     chapter_limit: Optional[int] = None
+    device: Literal["auto", "cuda", "cpu"] = "auto"
 
 
 @ex.automain
-def main(_run: Run, edition_set: str, hash_len: int, chapter_limit: Optional[int]):
+def main(
+    _run: Run,
+    edition_set: str,
+    hash_len: int,
+    chapter_limit: Optional[int],
+    device: Literal["auto", "cuda", "cpu"],
+):
     print_config(_run)
     assert edition_set in EDITION_SETS
     assert hash_len > 0 and hash_len <= 64
@@ -86,11 +93,13 @@ def main(_run: Run, edition_set: str, hash_len: int, chapter_limit: Optional[int
         "case": [make_plugin_case()],
         "propagate": [make_plugin_propagate()],
         "splice": [make_plugin_split(max_token_len=24, max_splits_nb=4)],
-        "bert": [make_plugin_mlm("answerdotai/ModernBERT-base", window=16)],
+        "bert": [
+            make_plugin_mlm("answerdotai/ModernBERT-base", window=16, device=device)
+        ],
         "pipe": [
             make_plugin_case(),
             make_plugin_split(max_token_len=24, max_splits_nb=4),
-            make_plugin_mlm("answerdotai/ModernBERT-base", window=16),
+            make_plugin_mlm("answerdotai/ModernBERT-base", window=16, device=device),
             make_plugin_propagate(),
         ],
         "cycle": [
@@ -98,7 +107,9 @@ def main(_run: Run, edition_set: str, hash_len: int, chapter_limit: Optional[int
                 [
                     make_plugin_case(),
                     make_plugin_split(max_token_len=24, max_splits_nb=4),
-                    make_plugin_mlm("answerdotai/ModernBERT-base", window=16),
+                    make_plugin_mlm(
+                        "answerdotai/ModernBERT-base", window=16, device=device
+                    ),
                     make_plugin_propagate(),
                 ],
                 budget=None,

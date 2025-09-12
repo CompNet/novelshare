@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-from typing import Callable, List, Optional
+from typing import Callable, List, Literal, Optional
 import sys, os, argparse, difflib
 import functools as ft
 from novelties_bookshare.conll import dump_conll2002_bio, load_conll2002_bio
@@ -163,11 +163,18 @@ def plugin_mlm(
     return decrypted_tokens
 
 
-def make_plugin_mlm(model: str, window: int) -> DecryptPlugin:
+def make_plugin_mlm(
+    model: str, window: int, device: Literal["auto", "cuda", "cpu"] = "auto"
+) -> DecryptPlugin:
     from transformers import pipeline
+    import torch
 
+    if device == "auto":
+        device = "cuda" if torch.cuda.is_available() else "cpu"
     return ft.partial(
-        plugin_mlm, pipeline=pipeline("fill-mask", model=model), window=window
+        plugin_mlm,
+        pipeline=pipeline("fill-mask", model=model, device=torch.device(device)),
+        window=window,
     )
 
 

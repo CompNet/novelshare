@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Literal
 import time
 from sacred import Experiment
 from sacred.observers import FileStorageObserver
@@ -38,6 +38,7 @@ def config():
     window_range: list[int]
     hash_len: int = 64
     chapter_limit: Optional[int] = None
+    device: Literal["auto", "cuda", "cpu"] = "auto"
 
 
 @ex.automain
@@ -47,6 +48,7 @@ def main(
     window_range: list[int],
     hash_len: int,
     chapter_limit: Optional[int],
+    device: Literal["auto", "cuda", "cpu"],
 ):
     print_config(_run)
     assert edition_set in EDITION_SETS
@@ -87,7 +89,7 @@ def main(
         for window in window_range:
             progress.set_description(f"{edition}.w={window}")
 
-            mlm = make_plugin_mlm("answerdotai/ModernBERT-base", window)
+            mlm = make_plugin_mlm("answerdotai/ModernBERT-base", window, device=device)
             t0 = time.process_time()
             decrypted_tokens = decrypt_tokens(
                 novelties_encrypted_tokens,
