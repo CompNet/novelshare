@@ -51,9 +51,7 @@ if __name__ == "__main__":
                 params["max_split_nb"],
                 params["edition"],
             )
-            lines[(params["window"], params["edition"])][metric_name] = metric_dict[
-                "values"
-            ][0]
+            lines[params_key][metric_name] = metric_dict["values"][0]
 
         for (max_token_len, max_split_nb, edition), metric_dict in lines.items():
             df_dict["max_token_len"].append(max_token_len)
