@@ -1,7 +1,14 @@
-from typing import List
 from novelties_bookshare.encrypt import encrypt_tokens
-from novelties_bookshare.decrypt import decrypt_tokens, plugin_propagate
+from novelties_bookshare.decrypt import (
+    decrypt_tokens,
+    make_plugin_case,
+    make_plugin_mlm,
+    make_plugin_propagate,
+    make_plugin_split,
+)
+from novelties_bookshare.experiments.metrics import errors_nb
 from hypothesis import given, strategies as st
+from strategies import error_seq_pairs
 
 
 def test_substitution():
@@ -20,7 +27,7 @@ def test_substitution_propagate():
         encrypt_tokens(ref_tokens),
         tags,
         user_tokens,
-        decryption_plugins=[plugin_propagate],
+        decryption_plugins=[make_plugin_propagate()],
     )
     assert pred_tokens == ref_tokens
 
@@ -42,6 +49,54 @@ def test_addition():
 
 
 @given(st.lists(st.text()))
-def test_encrypt_decrypt_recover_original_tokens(tokens: List[str]):
+def test_encrypt_decrypt_recover_original_tokens(tokens: list[str]):
     tags = ["O"] * len(tokens)
     assert decrypt_tokens(encrypt_tokens(tokens), tags, tokens) == tokens
+
+
+@given(error_seq_pairs(), st.integers(min_value=1, max_value=64))
+def test_propagate_cant_degrade(error_pair: tuple[list[str], list[str]], hash_len):
+    tokens, error_tokens = error_pair
+    tags = ["O"] * len(tokens)
+    encrypted = encrypt_tokens(tokens, hash_len=hash_len)
+    decrypted = decrypt_tokens(encrypted, tags, error_tokens, hash_len=hash_len)
+    decrypted_with_propagate = decrypt_tokens(
+        encrypted,
+        tags,
+        error_tokens,
+        hash_len=hash_len,
+        decryption_plugins=[make_plugin_propagate()],
+    )
+    assert errors_nb(tokens, decrypted_with_propagate) <= errors_nb(tokens, decrypted)
+
+
+@given(error_seq_pairs(), st.integers(min_value=1, max_value=64))
+def test_split_cant_degrade(error_pair: tuple[list[str], list[str]], hash_len):
+    tokens, error_tokens = error_pair
+    tags = ["O"] * len(tokens)
+    encrypted = encrypt_tokens(tokens, hash_len=hash_len)
+    decrypted = decrypt_tokens(encrypted, tags, error_tokens, hash_len=hash_len)
+    decrypted_with_propagate = decrypt_tokens(
+        encrypted,
+        tags,
+        error_tokens,
+        hash_len=hash_len,
+        decryption_plugins=[make_plugin_split(max_token_len=24, max_splits_nb=4)],
+    )
+    assert errors_nb(tokens, decrypted_with_propagate) <= errors_nb(tokens, decrypted)
+
+
+@given(error_seq_pairs(), st.integers(min_value=1, max_value=64))
+def test_case_cant_degrade(error_pair: tuple[list[str], list[str]], hash_len):
+    tokens, error_tokens = error_pair
+    tags = ["O"] * len(tokens)
+    encrypted = encrypt_tokens(tokens, hash_len=hash_len)
+    decrypted = decrypt_tokens(encrypted, tags, error_tokens, hash_len=hash_len)
+    decrypted_with_propagate = decrypt_tokens(
+        encrypted,
+        tags,
+        error_tokens,
+        hash_len=hash_len,
+        decryption_plugins=[make_plugin_case()],
+    )
+    assert errors_nb(tokens, decrypted_with_propagate) <= errors_nb(tokens, decrypted)
