@@ -53,6 +53,7 @@ if __name__ == "__main__":
                 df_dict[key].append(value)
 
     df = pd.DataFrame(df_dict)
+    print(df)
 
     df = df.pivot(index="edition", columns="window", values=args.metric)
     df = df.reset_index().set_index("edition")

@@ -1,8 +1,9 @@
+from typing import Union
 import re, argparse, json
 from collections import defaultdict
 import pathlib as pl
 import matplotlib.pyplot as plt
-import numpy as np
+import scienceplots
 import pandas as pd
 
 
@@ -15,6 +16,20 @@ def get_params(metric_key: str) -> tuple[str, dict[str, str]]:
     strat, edition, metric_name = m.groups()
     return metric_name, {"strategy": strat, "edition": edition}
 
+
+def format_bar_height(bar_value: Union[int, float]) -> str:
+    if isinstance(bar_value, float):
+        return f"{bar_value:.2f}"
+    return str(bar_value)
+
+
+METRIC_TO_YLABEL = {
+    "errors_nb": "Number of errors",
+    "duration_s": "Duration in seconds",
+    "errors_percent": "Percentage of errors",
+    "entity_errors_nb": "Number of entity errors",
+    "entity_errors_percent": "Percentage of entity errors",
+}
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -48,11 +63,21 @@ if __name__ == "__main__":
                 df_dict[key].append(value)
 
     df = pd.DataFrame(df_dict)
+    print(df)
 
     df = df.pivot(index="edition", columns="strategy", values=args.metric)
     df = df.reset_index().set_index("edition")
     df = df[df.mean().sort_values(ascending=False).index]
+
+    plt.style.use("science")
+    plt.rcParams.update({"font.size": 16})
     ax = df.plot.bar()
     for p in ax.patches:
-        ax.annotate(str(p.get_height()), (p.get_x() * 1.005, p.get_height() * 1.005))
+        ax.annotate(
+            format_bar_height(p.get_height()),
+            (p.get_x() * 1.005, p.get_height() * 1.005),
+            fontsize=12,
+        )
+    ax.set_ylabel(METRIC_TO_YLABEL[args.metric])
+    plt.grid()
     plt.show()

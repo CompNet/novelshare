@@ -61,6 +61,7 @@ if __name__ == "__main__":
                 df_dict[key].append(value)
 
     df = pd.DataFrame(df_dict)
+    print(df)
 
     df = df.pivot(
         index="edition", columns=["max_token_len", "max_split_nb"], values=args.metric
