@@ -11,10 +11,7 @@ OCR_CORRUPTION_PROBS = _load_ocr_probability_distributions_from_dict(
 )
 
 
-def substitute(tokens: list[str], proportion: float) -> list[str]:
-    assert 0 <= proportion <= 1.0
-
-    subst_nb = int(proportion * len(tokens))
+def substitute(tokens: list[str], subst_nb: int) -> list[str]:
     indices = np.random.choice(list(range(len(tokens))), subst_nb, replace=False)
 
     noisy_tokens = copy.deepcopy(tokens)
@@ -24,17 +21,14 @@ def substitute(tokens: list[str], proportion: float) -> list[str]:
     return noisy_tokens
 
 
-def delete(tokens: list[str], proportion: float) -> list[str]:
-    assert 0 <= proportion <= 1.0
-    deletion_nb = int(proportion * len(tokens))
+def delete(tokens: list[str], deletion_nb: int) -> list[str]:
     indices = set(
         np.random.choice(list(range(len(tokens))), deletion_nb, replace=False)
     )
     return [tok for i, tok in enumerate(tokens) if not i in indices]
 
 
-def add(tokens: list[str], proportion: float) -> list[str]:
-    addition_nb = int(proportion * len(tokens))
+def add(tokens: list[str], addition_nb: int) -> list[str]:
     noisy_tokens = copy.deepcopy(tokens)
     for _ in range(addition_nb):
         noisy_tokens.insert(random.randint(0, len(noisy_tokens) - 1), "[ADD]")
@@ -58,10 +52,7 @@ def ocr_scramble(tokens: list[str], proportion: float) -> list[str]:
     return corrupted_tokens  # type: ignore
 
 
-def token_split(tokens: list[str], proportion: float) -> list[str]:
-    assert 0 <= proportion <= 1.0
-
-    split_nb = int(proportion * len(tokens))
+def token_split(tokens: list[str], split_nb: int) -> list[str]:
     split_indices = set(
         np.random.choice(list(range(len(tokens))), split_nb, replace=False)
     )
@@ -79,9 +70,7 @@ def token_split(tokens: list[str], proportion: float) -> list[str]:
     return noisy_tokens
 
 
-def token_merge(tokens: list[str], proportion: float) -> list[str]:
-    assert 0 <= proportion <= 1.0
-    merge_nb = int(proportion * len(tokens))
+def token_merge(tokens: list[str], merge_nb: int) -> list[str]:
     merge_indices = set(
         np.random.choice(list(range(len(tokens) - 1)), merge_nb, replace=False)
     )
