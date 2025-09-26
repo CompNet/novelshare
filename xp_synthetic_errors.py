@@ -81,12 +81,12 @@ def main(
     device: Literal["auto", "cuda", "cpu"],
 ):
     print_config(_run)
-    assert min_errors > 0
+    assert min_errors >= 0
     assert max_errors > min_errors
     assert 1 <= min_hash_len <= 64
     assert 2 <= max_hash_len <= 65
 
-    corpus = ["./data/editions_diff/Moby_Dick/Novelties"]
+    corpus = [pl.Path("./data/editions_diff/Moby_Dick/Novelties")]
 
     strategies = [
         Strategy("naive", decrypt_tokens),
