@@ -1,4 +1,4 @@
-import argparse, json, re, os
+import argparse, json, re, os, math
 from collections import defaultdict
 import functools as ft
 import pathlib as pl
@@ -10,16 +10,28 @@ import matplotlib.pyplot as plt
 def get_params(metric_key: str) -> dict[str, str]:
     # form of each metric
     # b=book.s=strat.n=noise.h=hash_len.recovered_tokens_proportion
-    m = re.match(r"b=([^\.]+)\.s=([^\.]+)\.n=([^\.]+)\.h=([^\.]+)\..*", metric_key)
+    m = re.match(r"b=([^\.]+)\.s=([^\.]+)\.n=([^\.]+)\.h=([^\.]+)\.(.*)", metric_key)
     if m is None:
         return {}
-    book, strat, noise, hash_len = m.groups()
-    return {"book": book, "strat": strat, "noise": noise, "hash_len": hash_len}
+    book, strat, noise, hash_len, metric = m.groups()
+    return {
+        "book": book,
+        "strat": strat,
+        "noise": noise,
+        "hash_len": hash_len,
+        "metric": metric,
+    }
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-r", "--run", type=pl.Path)
+    parser.add_argument(
+        "-m",
+        "--metric",
+        type=str,
+        help="one of: 'errors_nb', 'duration_s', 'errors_percent', 'entity_errors_nb', 'entity_errors_percent'",
+    )
     parser.add_argument("-o", "--output-dir", type=pl.Path)
     args = parser.parse_args()
 
@@ -36,6 +48,8 @@ if __name__ == "__main__":
     df_dict = defaultdict(list)
     for k, v in metrics.items():
         params = get_params(k)
+        if params["metric"] != args.metric:
+            continue
         for step, value in zip(v["steps"], v["values"]):
             df_dict["book"].append(params["book"])
             df_dict["strat"].append(params["strat"])
@@ -44,6 +58,7 @@ if __name__ == "__main__":
             df_dict["steps"].append(step)
             df_dict["values"].append(value)
     df = pd.DataFrame(df_dict)
+    print(df)
 
     # plot
     os.makedirs(args.output_dir, exist_ok=True)
@@ -51,7 +66,7 @@ if __name__ == "__main__":
     # pick "book" to split curves
     for strat in set(df["strat"]):
         noises = list(set(df["noise"]))
-        fig, axs = plt.subplots(len(noises) // 2, 2, figsize=(12, 8))
+        fig, axs = plt.subplots(math.ceil(len(noises) / 2), 2, figsize=(12, 8))
         fig.suptitle(strat)
         for i, noise in enumerate(noises):
             ax = axs[i // 2][i % 2]
@@ -67,10 +82,11 @@ if __name__ == "__main__":
         out_path = args.output_dir / f"perbook_{strat}.png"
         print(f"saving {out_path}")
         plt.savefig(out_path)
+        plt.close("all")
     # pick or "strat" to split curves
     for book in set(df["book"]):
         noises = list(set(df["noise"]))
-        fig, axs = plt.subplots(len(noises) // 2, 2, figsize=(12, 8))
+        fig, axs = plt.subplots(math.ceil(len(noises) / 2), 2, figsize=(12, 8))
         fig.suptitle(book)
         for i, noise in enumerate(noises):
             ax = axs[i // 2][i % 2]
