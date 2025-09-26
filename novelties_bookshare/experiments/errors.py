@@ -1,5 +1,6 @@
 import random, copy
 import numpy as np
+from collections import Counter
 from scrambledtext import CorruptionEngine
 from novelties_bookshare.experiments.ocr_utils import (
     DEFAULT_PROBABILITY_DISTRIBUTIONS,
@@ -11,12 +12,26 @@ OCR_CORRUPTION_PROBS = _load_ocr_probability_distributions_from_dict(
 )
 
 
+def _token_dist(tokens: list[str]) -> dict[str, float]:
+    assert len(tokens) > 0
+    counter = Counter(tokens)
+    return {token: count / len(tokens) for token, count in counter.items()}
+
+
+def _sample(token_dist: dict[str, float]) -> str:
+    assert len(token_dist) > 0
+    vocab = list(token_dist.keys())
+    weights = list(token_dist.values())
+    return random.choices(vocab, weights=weights)[0]
+
+
 def substitute(tokens: list[str], subst_nb: int) -> list[str]:
+    token_dist = _token_dist(tokens)
     indices = np.random.choice(list(range(len(tokens))), subst_nb, replace=False)
 
     noisy_tokens = copy.deepcopy(tokens)
     for i in indices:
-        noisy_tokens[i] = "[ADD]"
+        noisy_tokens[i] = _sample(token_dist)
 
     return noisy_tokens
 
@@ -29,9 +44,12 @@ def delete(tokens: list[str], deletion_nb: int) -> list[str]:
 
 
 def add(tokens: list[str], addition_nb: int) -> list[str]:
+    token_dist = _token_dist(tokens)
     noisy_tokens = copy.deepcopy(tokens)
     for _ in range(addition_nb):
-        noisy_tokens.insert(random.randint(0, len(noisy_tokens) - 1), "[ADD]")
+        noisy_tokens.insert(
+            random.randint(0, len(noisy_tokens) - 1), _sample(token_dist)
+        )
     return noisy_tokens
 
 

@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Literal
 import time
 import pathlib as pl
 import functools as ft
@@ -16,6 +16,8 @@ from novelties_bookshare.decrypt import (
     make_plugin_mlm,
     make_plugin_propagate,
     make_plugin_split,
+    make_plugin_case,
+    make_plugin_cycle,
 )
 from novelties_bookshare.decrypt import decrypt_tokens
 from novelties_bookshare.experiments.data import load_book
@@ -64,6 +66,7 @@ def config():
     min_hash_len: int = 64
     max_hash_len: int = 65
     jobs_nb: int = 1
+    device: Literal["auto", "cuda", "cpu"] = "auto"
 
 
 @ex.automain
@@ -75,6 +78,7 @@ def main(
     min_hash_len: int,
     max_hash_len: int,
     jobs_nb: int,
+    device: Literal["auto", "cuda", "cpu"],
 ):
     print_config(_run)
     assert min_errors > 0
@@ -100,22 +104,46 @@ def main(
             ),
         ),
         Strategy(
-            "mlm",
+            "bert",
             ft.partial(
                 decrypt_tokens,
                 decryption_plugins=[
-                    make_plugin_mlm("answerdotai/ModernBERT-base", window=16)
+                    make_plugin_mlm(
+                        "answerdotai/ModernBERT-base", window=16, device=device
+                    )
                 ],
             ),
         ),
         Strategy(
-            "split->mlm->propagate",
+            "pipe",
             ft.partial(
                 decrypt_tokens,
                 decryption_plugins=[
+                    make_plugin_case(),
                     make_plugin_split(max_token_len=24, max_splits_nb=4),
-                    make_plugin_mlm("answerdotai/ModernBERT-base", window=16),
+                    make_plugin_mlm(
+                        "answerdotai/ModernBERT-base", window=16, device=device
+                    ),
                     make_plugin_propagate(),
+                ],
+            ),
+        ),
+        Strategy(
+            "cycle",
+            ft.partial(
+                decrypt_tokens,
+                decryption_plugins=[
+                    make_plugin_cycle(
+                        [
+                            make_plugin_case(),
+                            make_plugin_split(max_token_len=24, max_splits_nb=4),
+                            make_plugin_mlm(
+                                "answerdotai/ModernBERT-base", window=16, device=device
+                            ),
+                            make_plugin_propagate(),
+                        ],
+                        budget=None,
+                    )
                 ],
             ),
         ),
@@ -125,7 +153,7 @@ def main(
     print("/!\\ warning /!\\ ocr_scramble deactivated for now")
     errors_fns = [substitute, delete, add, token_split, token_merge]
     for errors_fn in errors_fns:
-        if errors_fn == "ocr_scramble":
+        if errors_fn == ocr_scramble:
             _run.info[f"{errors_fn.__name__}.errors_unit"] = "WER"
         else:
             _run.info[f"{errors_fn.__name__}.errors_unit"] = "proportion"
