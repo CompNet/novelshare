@@ -1,3 +1,4 @@
+from hypothesis import given, strategies as st
 from novelties_bookshare.encrypt import encrypt_tokens
 from novelties_bookshare.decrypt import (
     decrypt_tokens,
@@ -7,8 +8,7 @@ from novelties_bookshare.decrypt import (
     make_plugin_split,
 )
 from novelties_bookshare.experiments.metrics import errors_nb
-from hypothesis import given, strategies as st
-from strategies import error_seq_pairs
+from tests.strategies import error_seq_pairs
 
 
 def test_substitution():
@@ -28,6 +28,32 @@ def test_substitution_propagate():
         tags,
         user_tokens,
         decryption_plugins=[make_plugin_propagate()],
+    )
+    assert pred_tokens == ref_tokens
+
+
+def test_tokensplit_split():
+    ref_tokens = "A B CD E".split()
+    user_tokens = "A B C D E".split()
+    tags = "B-PER O O B-PER".split()
+    pred_tokens = decrypt_tokens(
+        encrypt_tokens(ref_tokens),
+        tags,
+        user_tokens,
+        decryption_plugins=[make_plugin_split(8, 8)],
+    )
+    assert pred_tokens == ref_tokens
+
+
+def test_tokenmerge_split():
+    ref_tokens = "A B C D E".split()
+    user_tokens = "A B CD E".split()
+    tags = "B-PER O O O B-PER".split()
+    pred_tokens = decrypt_tokens(
+        encrypt_tokens(ref_tokens),
+        tags,
+        user_tokens,
+        decryption_plugins=[make_plugin_split(8, 8)],
     )
     assert pred_tokens == ref_tokens
 
