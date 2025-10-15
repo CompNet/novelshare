@@ -280,11 +280,6 @@ def decrypt_tokens(
 
     if not decryption_plugins is None:
         for plugin in decryption_plugins:
-            matcher = difflib.SequenceMatcher(
-                None,
-                encrypted_tokens,
-                encrypt_tokens(decrypted_tokens, hash_len=hash_len),
-            )
             decrypted_tokens = plugin(
                 matcher, user_tokens, decrypted_tokens, encrypted_tokens, hash_len
             )
