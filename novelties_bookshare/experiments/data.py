@@ -1,18 +1,16 @@
-from typing import Optional
+from typing import Optional, Generator
 import re
 import pathlib as pl
 from novelties_bookshare.conll import load_conll2002_bio
 
 
-def load_book(
+def iter_book_chapters(
     path: pl.Path | str, chapter_limit: Optional[int] = None
-) -> tuple[list[str], list[str]]:
+) -> Generator[list[str], None, None]:
     if isinstance(path, str):
         path = pl.Path(path)
     path = path.expanduser()
 
-    tokens = []
-    tags = []
     chapter_paths = path.glob("chapter_*.conll")
     chapter_paths = sorted(
         chapter_paths,
@@ -22,8 +20,12 @@ def load_book(
         chapter_paths = chapter_paths[:chapter_limit]
 
     for path in chapter_paths:
-        chapter_tokens, chapter_tags = load_conll2002_bio(str(path))
-        tokens += chapter_tokens
-        tags += chapter_tags
+        chapter_tokens, _ = load_conll2002_bio(str(path))
+        yield chapter_tokens
 
-    return tokens, tags
+
+def load_book(path: pl.Path | str, chapter_limit: Optional[int] = None) -> list[str]:
+    tokens = []
+    for chapter_tokens in iter_book_chapters(path, chapter_limit):
+        tokens += chapter_tokens
+    return tokens

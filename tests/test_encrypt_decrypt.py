@@ -74,6 +74,15 @@ def test_addition():
     assert pred_tokens == ref_tokens
 
 
+def block_input():
+    ref_tokens = "A B C D E".split()
+    tags = "B-PER O O O B-PER".split()
+    pred_tokens = decrypt_tokens(
+        [ref_tokens, ref_tokens], [tags, tags], [ref_tokens, ref_tokens]
+    )
+    assert pred_tokens == ref_tokens
+
+
 @given(st.lists(st.text()))
 def test_encrypt_decrypt_recover_original_tokens(tokens: list[str]):
     tags = ["O"] * len(tokens)
