@@ -14,18 +14,15 @@ from tests.strategies import error_seq_pairs
 def test_substitution():
     ref_tokens = "A B C D E E".split()
     user_tokens = "A B C D E X".split()
-    tags = "B-PER O O O B-PER I-PER".split()
-    pred_tokens = decrypt_tokens(encrypt_tokens(ref_tokens), tags, user_tokens)
+    pred_tokens = decrypt_tokens(encrypt_tokens(ref_tokens), user_tokens)
     assert pred_tokens == "A B C D E [UNK]".split()
 
 
 def test_substitution_propagate():
     ref_tokens = "A B C D E E".split()
     user_tokens = "A B C D E X".split()
-    tags = "B-PER O O O B-PER I-PER".split()
     pred_tokens = decrypt_tokens(
         encrypt_tokens(ref_tokens),
-        tags,
         user_tokens,
         decryption_plugins=[make_plugin_propagate()],
     )
@@ -35,10 +32,8 @@ def test_substitution_propagate():
 def test_tokensplit_split():
     ref_tokens = "A B CD E".split()
     user_tokens = "A B C D E".split()
-    tags = "B-PER O O B-PER".split()
     pred_tokens = decrypt_tokens(
         encrypt_tokens(ref_tokens),
-        tags,
         user_tokens,
         decryption_plugins=[make_plugin_split(8, 8)],
     )
@@ -48,10 +43,8 @@ def test_tokensplit_split():
 def test_tokenmerge_split():
     ref_tokens = "A B C D E".split()
     user_tokens = "A B CD E".split()
-    tags = "B-PER O O O B-PER".split()
     pred_tokens = decrypt_tokens(
         encrypt_tokens(ref_tokens),
-        tags,
         user_tokens,
         decryption_plugins=[make_plugin_split(8, 8)],
     )
@@ -61,43 +54,35 @@ def test_tokenmerge_split():
 def test_deletion():
     ref_tokens = "A B C D E E".split()
     user_tokens = "A B C E E".split()
-    tags = "B-PER O O O B-PER I-PER".split()
-    pred_tokens = decrypt_tokens(encrypt_tokens(ref_tokens), tags, user_tokens)
+    pred_tokens = decrypt_tokens(encrypt_tokens(ref_tokens), user_tokens)
     assert pred_tokens == "A B C [UNK] E E".split()
 
 
 def test_addition():
     ref_tokens = "A B C D E E".split()
     user_tokens = "A B C X D E E".split()
-    tags = "B-PER O O O B-PER I-PER".split()
-    pred_tokens = decrypt_tokens(encrypt_tokens(ref_tokens), tags, user_tokens)
+    pred_tokens = decrypt_tokens(encrypt_tokens(ref_tokens), user_tokens)
     assert pred_tokens == ref_tokens
 
 
 def block_input():
     ref_tokens = "A B C D E".split()
-    tags = "B-PER O O O B-PER".split()
-    pred_tokens = decrypt_tokens(
-        [ref_tokens, ref_tokens], [tags, tags], [ref_tokens, ref_tokens]
-    )
+    pred_tokens = decrypt_tokens([ref_tokens, ref_tokens], [ref_tokens, ref_tokens])
     assert pred_tokens == ref_tokens
 
 
 @given(st.lists(st.text()))
 def test_encrypt_decrypt_recover_original_tokens(tokens: list[str]):
-    tags = ["O"] * len(tokens)
-    assert decrypt_tokens(encrypt_tokens(tokens), tags, tokens) == tokens
+    assert decrypt_tokens(encrypt_tokens(tokens), tokens) == tokens
 
 
 @given(error_seq_pairs(), st.integers(min_value=1, max_value=64))
 def test_propagate_cant_degrade(error_pair: tuple[list[str], list[str]], hash_len):
     tokens, error_tokens = error_pair
-    tags = ["O"] * len(tokens)
     encrypted = encrypt_tokens(tokens, hash_len=hash_len)
-    decrypted = decrypt_tokens(encrypted, tags, error_tokens, hash_len=hash_len)
+    decrypted = decrypt_tokens(encrypted, error_tokens, hash_len=hash_len)
     decrypted_with_propagate = decrypt_tokens(
         encrypted,
-        tags,
         error_tokens,
         hash_len=hash_len,
         decryption_plugins=[make_plugin_propagate()],
@@ -108,12 +93,10 @@ def test_propagate_cant_degrade(error_pair: tuple[list[str], list[str]], hash_le
 @given(error_seq_pairs(), st.integers(min_value=1, max_value=64))
 def test_split_cant_degrade(error_pair: tuple[list[str], list[str]], hash_len):
     tokens, error_tokens = error_pair
-    tags = ["O"] * len(tokens)
     encrypted = encrypt_tokens(tokens, hash_len=hash_len)
-    decrypted = decrypt_tokens(encrypted, tags, error_tokens, hash_len=hash_len)
+    decrypted = decrypt_tokens(encrypted, error_tokens, hash_len=hash_len)
     decrypted_with_propagate = decrypt_tokens(
         encrypted,
-        tags,
         error_tokens,
         hash_len=hash_len,
         decryption_plugins=[make_plugin_split(max_token_len=24, max_splits_nb=4)],
@@ -124,12 +107,10 @@ def test_split_cant_degrade(error_pair: tuple[list[str], list[str]], hash_len):
 @given(error_seq_pairs(), st.integers(min_value=1, max_value=64))
 def test_case_cant_degrade(error_pair: tuple[list[str], list[str]], hash_len):
     tokens, error_tokens = error_pair
-    tags = ["O"] * len(tokens)
     encrypted = encrypt_tokens(tokens, hash_len=hash_len)
-    decrypted = decrypt_tokens(encrypted, tags, error_tokens, hash_len=hash_len)
+    decrypted = decrypt_tokens(encrypted, error_tokens, hash_len=hash_len)
     decrypted_with_propagate = decrypt_tokens(
         encrypted,
-        tags,
         error_tokens,
         hash_len=hash_len,
         decryption_plugins=[make_plugin_case()],
