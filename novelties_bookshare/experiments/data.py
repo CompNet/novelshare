@@ -29,3 +29,18 @@ def load_book(path: pl.Path | str, chapter_limit: Optional[int] = None) -> list[
     for chapter_tokens in iter_book_chapters(path, chapter_limit):
         tokens += chapter_tokens
     return tokens
+
+
+def replace_(chapters: list[list[str]], replacements: list[tuple[list[str], str]]):
+    for chapter in chapters:
+        for i, token in enumerate(chapter):
+            for repl_source, repl_target in replacements:
+                if token in repl_source:
+                    chapter[i] = repl_target
+
+
+def normalize_(chapters: list[list[str]]):
+    replace_(chapters, [(["``", "''", "“", "”"], '"')])
+    replace_(chapters, [(["‘", "’"], "'")])
+    replace_(chapters, [(["…"], "...")])
+    replace_(chapters, [(["—"], "-")])

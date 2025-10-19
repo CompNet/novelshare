@@ -4,6 +4,7 @@ import pathlib as pl
 import functools as ft
 import itertools as it
 from dataclasses import dataclass
+from more_itertools import flatten
 from tqdm import tqdm
 from joblib import Parallel, delayed
 from sacred import Experiment
@@ -20,7 +21,7 @@ from novelties_bookshare.decrypt import (
     make_plugin_cycle,
 )
 from novelties_bookshare.decrypt import decrypt_tokens
-from novelties_bookshare.experiments.data import load_book
+from novelties_bookshare.experiments.data import iter_book_chapters, load_book
 from novelties_bookshare.experiments.metrics import record_decryption_metrics_
 from novelties_bookshare.experiments.errors import (
     substitute,
@@ -38,12 +39,10 @@ ex.observers.append(FileStorageObserver("runs"))
 DecryptFn = Callable[
     # args:
     [
-        # encrypted_tokens
-        list,
-        # tags
-        list[str],
-        # user_tokens
-        list[str],
+        # encrypted_chapters
+        list[list[str]],
+        # user_chapters
+        list[list[str]],
         # hash_len
         int | None,
     ],
@@ -169,27 +168,32 @@ def main(
         errors_fn: Callable[[list[str], float], list[str]],
         hash_len: int,
         nb_errors: float,
-    ) -> tuple[int, list[str], list[str], list[str], float]:
+    ) -> tuple[int, list[list[str]], list[str], float]:
         t0 = time.process_time()
-        tokens, tags = load_book(book_path)
-        encrypted_tokens = encrypt_tokens(tokens)
-        user_tokens = errors_fn(tokens, nb_errors)
+        chapters = list(iter_book_chapters(book_path))
+        encrypted_chapters = [
+            encrypt_tokens(chapter, hash_len=hash_len) for chapter in chapters
+        ]
+        user_chapters = [
+            errors_fn(chapter, nb_errors // len(chapters)) for chapter in chapters
+        ]
         decrypted_tokens = strategy.decrypt_fn(
-            encrypted_tokens, tags, user_tokens, hash_len
+            encrypted_chapters, user_chapters, hash_len
         )
         t1 = time.process_time()
-        return job_i, tokens, decrypted_tokens, tags, t1 - t0
+        return job_i, chapters, decrypted_tokens, t1 - t0
 
     setups = list(it.product(corpus, strategies, errors_fns, hash_lens, nb_errors))
     progress = tqdm(total=len(setups), ascii=True)
 
     with Parallel(n_jobs=jobs_nb, return_as="generator_unordered") as parallel:
-        for job_i, gold_tokens, decrypted_tokens, gold_tags, duration_s in parallel(
+        for job_i, gold_chapters, decrypted_tokens, duration_s in parallel(
             delayed(decrypt_setup_test)(i, *args) for i, args in enumerate(setups)
         ):
+            gold_tokens = list(flatten(gold_chapters))
             book_path, strategy, errors_fn, hash_len, nb_errors = setups[job_i]
             setup_name = f"b={book_path.name}.s={strategy.name}.n={errors_fn.__name__}.h={hash_len}"
             record_decryption_metrics_(
-                _run, setup_name, gold_tokens, decrypted_tokens, gold_tags, duration_s
+                _run, setup_name, gold_tokens, decrypted_tokens, duration_s
             )
             progress.update()
