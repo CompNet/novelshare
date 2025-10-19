@@ -5,7 +5,7 @@ from novelties_bookshare.encrypt import encrypt_tokens
 from novelties_bookshare.experiments.data import load_book
 
 if __name__ == "__main__":
-    tokens, _ = load_book("./data/editions_diff/Moby_Dick/Novelties")
+    tokens = load_book("./data/editions_diff/Moby_Dick/Novelties")
 
     x = list(range(1, 65))
     y = []
