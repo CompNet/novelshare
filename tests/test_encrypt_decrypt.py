@@ -65,10 +65,13 @@ def test_addition():
     assert pred_tokens == ref_tokens
 
 
-def block_input():
+def test_block_input():
     ref_tokens = "A B C D E".split()
-    pred_tokens = decrypt_tokens([ref_tokens, ref_tokens], [ref_tokens, ref_tokens])
-    assert pred_tokens == ref_tokens
+    encrypted_tokens = encrypt_tokens(ref_tokens)
+    pred_tokens = decrypt_tokens(
+        [encrypted_tokens, encrypted_tokens], [ref_tokens, ref_tokens]
+    )
+    assert pred_tokens == ref_tokens + ref_tokens
 
 
 @given(st.lists(st.text()))
