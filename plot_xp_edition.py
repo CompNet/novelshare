@@ -79,5 +79,4 @@ if __name__ == "__main__":
             fontsize=12,
         )
     ax.set_ylabel(METRIC_TO_YLABEL[args.metric])
-    plt.grid()
     plt.show()
