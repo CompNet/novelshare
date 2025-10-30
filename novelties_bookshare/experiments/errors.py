@@ -53,16 +53,16 @@ def add(tokens: list[str], addition_nb: int) -> list[str]:
     return noisy_tokens
 
 
-def ocr_scramble(tokens: list[str], proportion: float) -> list[str]:
-    if proportion == 0.0:
+def ocr_scramble(tokens: list[str], wer: float, cer: float) -> list[str]:
+    if cer == 0.0:
         return tokens
 
     engine = CorruptionEngine(
         OCR_CORRUPTION_PROBS.conditional,
         OCR_CORRUPTION_PROBS.substitutions,
         OCR_CORRUPTION_PROBS.insertions,
-        target_wer=proportion,  # type: ignore
-        target_cer=proportion,
+        target_wer=wer,
+        target_cer=cer,
     )
 
     corrupted_text, _, _, _ = engine.corrupt_text(" ".join(tokens))

@@ -21,15 +21,9 @@ from novelties_bookshare.decrypt import (
     make_plugin_cycle,
 )
 from novelties_bookshare.decrypt import decrypt_tokens
-from novelties_bookshare.experiments.data import iter_book_chapters
+from novelties_bookshare.experiments.data import iter_book_chapters, load_book
 from novelties_bookshare.experiments.metrics import record_decryption_metrics_
-from novelties_bookshare.experiments.errors import (
-    substitute,
-    delete,
-    add,
-    token_split,
-    token_merge,
-)
+from novelties_bookshare.experiments.errors import ocr_scramble
 
 ex = Experiment()
 ex.captured_out_filter = apply_backspaces_and_linefeeds  # type: ignore
@@ -58,9 +52,8 @@ class Strategy:
 
 @ex.config
 def config():
-    min_errors: int
-    max_errors: int
-    errors_step: int
+    wer_grid: list[float]
+    cer_grid: list[float]
     min_hash_len: int = 64
     max_hash_len: int = 65
     jobs_nb: int = 1
@@ -70,19 +63,17 @@ def config():
 @ex.automain
 def main(
     _run: Run,
-    min_errors: int,
-    max_errors: int,
-    errors_step: int,
+    wer_grid: list[float],
+    cer_grid: list[float],
     min_hash_len: int,
     max_hash_len: int,
     jobs_nb: int,
     device: Literal["auto", "cuda", "cpu"],
 ):
     print_config(_run)
-    assert min_errors >= 0
-    assert max_errors > min_errors
     assert 1 <= min_hash_len <= 64
     assert 2 <= max_hash_len <= 65
+    assert len(wer_grid) == len(cer_grid)
 
     corpus = [pl.Path("./data/editions_diff/Moby_Dick/Novelties")]
 
@@ -147,11 +138,7 @@ def main(
         ),
     ]
 
-    errors_fns = [substitute, delete, add, token_split, token_merge]
-    for errors_fn in errors_fns:
-        _run.info[f"{errors_fn.__name__}.errors_unit"] = "number of errors"
-
-    nb_errors = list(range(min_errors, max_errors, errors_step))
+    _run.info[f"ocr_scramble.errors_unit"] = "(WER, CER)"
 
     hash_lens = list(range(min_hash_len, max_hash_len))
 
@@ -159,25 +146,22 @@ def main(
         job_i: int,
         book_path: pl.Path,
         strategy: Strategy,
-        errors_fn: Callable[[list[str], float], list[str]],
         hash_len: int,
-        nb_errors: float,
+        wer_cer: tuple[float, float],
     ) -> tuple[int, list[list[str]], list[str], float]:
         t0 = time.process_time()
         chapters = list(iter_book_chapters(book_path))
         encrypted_chapters = [
             encrypt_tokens(chapter, hash_len=hash_len) for chapter in chapters
         ]
-        user_chapters = [
-            errors_fn(chapter, nb_errors // len(chapters)) for chapter in chapters
-        ]
+        user_chapters = [ocr_scramble(chapter, *wer_cer) for chapter in chapters]
         decrypted_tokens = strategy.decrypt_fn(
             encrypted_chapters, user_chapters, hash_len
         )
         t1 = time.process_time()
         return job_i, chapters, decrypted_tokens, t1 - t0
 
-    setups = list(it.product(corpus, strategies, errors_fns, hash_lens, nb_errors))
+    setups = list(it.product(corpus, strategies, hash_lens, zip(wer_grid, cer_grid)))
     progress = tqdm(total=len(setups), ascii=True)
 
     with Parallel(n_jobs=jobs_nb, return_as="generator_unordered") as parallel:
@@ -185,8 +169,8 @@ def main(
             delayed(decrypt_setup_test)(i, *args) for i, args in enumerate(setups)
         ):
             gold_tokens = list(flatten(gold_chapters))
-            book_path, strategy, errors_fn, hash_len, nb_errors = setups[job_i]
-            setup_name = f"b={book_path.name}.s={strategy.name}.n={errors_fn.__name__}.h={hash_len}"
+            book_path, strategy, hash_len, (wer, cer) = setups[job_i]
+            setup_name = f"b={book_path.name}.s={strategy.name}.n=ocr_scramble.h={hash_len}.w={wer}.c={cer}"
             record_decryption_metrics_(
                 _run, setup_name, gold_tokens, decrypted_tokens, duration_s
             )
