@@ -150,12 +150,20 @@ def plugin_mlm(
             for i in range(i2 - i1):
                 left = decrypted_tokens[i1 + i - window : i1 + i]
                 right = decrypted_tokens[i1 + i + 1 : i1 + i + window]
-                assert not "[MASK]" in left and not "[MASK]" in right
                 X = left + ["[MASK]"] + right
-                X = " ".join(X)  # pipeline expects a string
-                # pick the probable token whose encrypted form match
-                # the encrypted gold token
-                candidates: list[dict] = pipeline(X)
+                X = " ".join(X)  # pipeline expects a string pick the
+                # probable token whose encrypted form match the
+                # encrypted gold token
+                candidates = pipeline(X)
+                # it's possible (although unlikely) that other mask
+                # tokens are here. In that case, the pipeline returns
+                # a list of candidate list, so we deal with that here
+                if "[MASK]" in left or "[MASK]" in right:
+                    candidates_index = sum(
+                        1 if ltok == "[MASK]" else 0 for ltok in left
+                    )
+                    candidates = candidates[candidates_index]
+                # perform the replacement
                 for cand in candidates:
                     cand = cand["token_str"].strip(" ")
                     encrypted_cand = encrypt_token(cand, hash_len)
