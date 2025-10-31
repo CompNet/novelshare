@@ -22,6 +22,10 @@ EDITION_SETS = {
         "PG2489": "./data/Moby_Dick/PG2489",
         "PG2701": "./data/Moby_Dick/PG2701",
     },
+    "Pride_and_Prejudice": {
+        "PG1342": "./data/PrideAndPrejudice/PG1342",
+        "PG42671": "./data/PrideAndPrejudice/PG42671",
+    },
 }
 
 
