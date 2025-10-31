@@ -9,16 +9,15 @@ import matplotlib.pyplot as plt
 @ft.lru_cache
 def get_params(metric_key: str) -> dict[str, str]:
     # form of each metric
-    # b=book.s=strat.n=noise.h=hash_len.recovered_tokens_proportion
-    m = re.match(r"b=([^\.]+)\.s=([^\.]+)\.n=([^\.]+)\.h=([^\.]+)\.(.*)", metric_key)
+    # b=book.s=strat.n=noise.recovered_tokens_proportion
+    m = re.match(r"b=([^\.]+)\.s=([^\.]+)\.n=([^\.]+)\.(.*)", metric_key)
     if m is None:
         return {}
-    book, strat, noise, hash_len, metric = m.groups()
+    book, strat, noise, metric = m.groups()
     return {
         "book": book,
         "strat": strat,
         "noise": noise,
-        "hash_len": hash_len,
         "metric": metric,
     }
 
@@ -81,7 +80,6 @@ if __name__ == "__main__":
             df_dict["book"].append(params["book"])
             df_dict["strat"].append(params["strat"])
             df_dict["noise"].append(params["noise"])
-            df_dict["hash_len"].append(params["hash_len"])
             df_dict["steps"].append(step)
             df_dict["values"].append(value)
     df = pd.DataFrame(df_dict)
@@ -99,11 +97,7 @@ if __name__ == "__main__":
         for i, noise in enumerate(noises):
             ax = axs[i // 2][i % 2]
             ax.set_ylabel(METRIC2PRETTY[args.metric])
-            ax_df = df[
-                (df["strat"] == strat)
-                & (df["noise"] == noise)
-                & (df["hash_len"] == "64")
-            ]
+            ax_df = df[(df["strat"] == strat) & (df["noise"] == noise)]
             for book in set(df["book"]):
                 ax_df[ax_df["book"] == book].plot(  # type: ignore
                     ax=ax, x="steps", y="values", title=noise, label=book
@@ -122,9 +116,7 @@ if __name__ == "__main__":
         for i, noise in enumerate(noises):
             ax = axs[i // 2][i % 2]
             ax.set_ylabel(METRIC2PRETTY[args.metric])
-            ax_df = df[
-                (df["book"] == book) & (df["noise"] == noise) & (df["hash_len"] == "64")
-            ]
+            ax_df = df[(df["book"] == book) & (df["noise"] == noise)]
             for strat in set(df["strat"]):
                 ax_df[ax_df["strat"] == strat].plot(  # type: ignore
                     ax=ax, x="steps", y="values", title=noise, label=strat

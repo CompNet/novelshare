@@ -54,8 +54,7 @@ class Strategy:
 def config():
     wer_grid: list[float]
     cer_grid: list[float]
-    min_hash_len: int = 64
-    max_hash_len: int = 65
+    hash_len: int = 64
     jobs_nb: int = 1
     device: Literal["auto", "cuda", "cpu"] = "auto"
 
@@ -65,14 +64,12 @@ def main(
     _run: Run,
     wer_grid: list[float],
     cer_grid: list[float],
-    min_hash_len: int,
-    max_hash_len: int,
+    hash_len: int,
     jobs_nb: int,
     device: Literal["auto", "cuda", "cpu"],
 ):
     print_config(_run)
-    assert 1 <= min_hash_len <= 64
-    assert 2 <= max_hash_len <= 65
+    assert hash_len > 0 and hash_len <= 64
     assert len(wer_grid) == len(cer_grid)
 
     corpus = [
@@ -147,13 +144,10 @@ def main(
 
     _run.info[f"ocr_scramble.errors_unit"] = "(WER, CER)"
 
-    hash_lens = list(range(min_hash_len, max_hash_len))
-
     def decrypt_setup_test(
         job_i: int,
         book_path: pl.Path,
         strategy: Strategy,
-        hash_len: int,
         wer_cer: tuple[float, float],
     ) -> tuple[int, list[list[str]], list[str], float]:
         t0 = time.process_time()
@@ -168,7 +162,7 @@ def main(
         t1 = time.process_time()
         return job_i, chapters, decrypted_tokens, t1 - t0
 
-    setups = list(it.product(corpus, strategies, hash_lens, zip(wer_grid, cer_grid)))
+    setups = list(it.product(corpus, strategies, zip(wer_grid, cer_grid)))
     progress = tqdm(total=len(setups), ascii=True)
 
     with Parallel(n_jobs=jobs_nb, return_as="generator_unordered") as parallel:
@@ -176,8 +170,10 @@ def main(
             delayed(decrypt_setup_test)(i, *args) for i, args in enumerate(setups)
         ):
             gold_tokens = list(flatten(gold_chapters))
-            book_path, strategy, hash_len, (wer, cer) = setups[job_i]
-            setup_name = f"b={book_path.name}.s={strategy.name}.n=ocr_scramble.h={hash_len}.w={wer}.c={cer}"
+            book_path, strategy, (wer, cer) = setups[job_i]
+            setup_name = (
+                f"b={book_path.name}.s={strategy.name}.n=ocr_scramble.w={wer}.c={cer}"
+            )
             record_decryption_metrics_(
                 _run, setup_name, gold_tokens, decrypted_tokens, duration_s
             )
