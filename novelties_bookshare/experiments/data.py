@@ -12,7 +12,9 @@ EDITION_SETS = {
     },
     "Frankenstein": {
         "PG84": "./data/Frankenstein/PG84",
-        "PG41445": "./data/Frankenstein/PG41445",
+        # we do not use PG41445 as it does not have the same number of
+        # chapters as the other two.
+        # "PG41445": "./data/Frankenstein/PG41445",
         "PG42324": "./data/Frankenstein/PG42324",
     },
     "Moby_Dick": {
