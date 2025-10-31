@@ -1,4 +1,4 @@
-from typing import Callable, Literal
+from typing import Callable, Literal, Optional
 import time
 import pathlib as pl
 import functools as ft
@@ -55,6 +55,7 @@ def config():
     wer_grid: list[float]
     cer_grid: list[float]
     hash_len: int = 64
+    chapter_limit: Optional[int] = None
     jobs_nb: int = 1
     device: Literal["auto", "cuda", "cpu"] = "auto"
 
@@ -65,6 +66,7 @@ def main(
     wer_grid: list[float],
     cer_grid: list[float],
     hash_len: int,
+    chapter_limit: Optional[int],
     jobs_nb: int,
     device: Literal["auto", "cuda", "cpu"],
 ):
@@ -74,11 +76,8 @@ def main(
 
     corpus = [
         pl.Path("./data/Frankenstein/PG84/"),
-        pl.Path("./data/Frankenstein/PG41445/"),
-        pl.Path("./data/Frankenstein/PG42324/"),
         pl.Path("./data/Moby_Dick/PG15/"),
-        pl.Path("./data/Moby_Dick/PG2489/"),
-        pl.Path("./data/Moby_Dick/PG2701/"),
+        pl.Path("./data/PrideAndPrejudice/PG1342/"),
     ]
 
     strategies = [
@@ -151,7 +150,7 @@ def main(
         wer_cer: tuple[float, float],
     ) -> tuple[int, list[list[str]], list[str], float]:
         t0 = time.process_time()
-        chapters = list(iter_book_chapters(book_path))
+        chapters = list(iter_book_chapters(book_path, chapter_limit=chapter_limit))
         encrypted_chapters = [
             encrypt_tokens(chapter, hash_len=hash_len) for chapter in chapters
         ]
