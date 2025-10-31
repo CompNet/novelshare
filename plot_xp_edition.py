@@ -8,7 +8,6 @@ import pandas as pd
 
 
 def get_params(metric_key: str) -> tuple[str, dict[str, str]]:
-    # form of each metric
     # s=strat.e=edition.error_nb
     m = re.match(r"s=([^\.]+)\.e=([^\.]+)\.(.*)", metric_key)
     if m is None:
@@ -18,7 +17,6 @@ def get_params(metric_key: str) -> tuple[str, dict[str, str]]:
 
 
 def get_params_mlm(metric_key: str) -> tuple[str, dict[str, str]]:
-    # form of each metric
     # w=window.e=edition.metric_name
     m = re.match(r"w=([^\.]+)\.e=([^\.]+)\.(.*)", metric_key)
     if m is None:
@@ -28,7 +26,6 @@ def get_params_mlm(metric_key: str) -> tuple[str, dict[str, str]]:
 
 
 def get_params_split(metric_key: str) -> tuple[str, dict[str, str]]:
-    # form of each metric
     # t=max_token_len.s=max_split_nb.e=edition.metric_name
     m = re.match(r"t=([^\.]+)\.s=([^\.]+)\.e=([^\.]+)\.(.*)", metric_key)
     if m is None:
@@ -39,6 +36,15 @@ def get_params_split(metric_key: str) -> tuple[str, dict[str, str]]:
         "max_split_nb": max_split_nb,
         "edition": edition,
     }
+
+
+def get_params_propagate(metric_key: str) -> tuple[str, dict[str, str]]:
+    # p=pipeline.e=edition
+    m = re.match(r"p=([^\.]+)\.e=([^\.]+)\.(.*)", metric_key)
+    if m is None:
+        return "", {}
+    pipeline, edition, metric_name = m.groups()
+    return metric_name, {"pipeline": pipeline, "edition": edition}
 
 
 def format_bar_height(bar_value: Union[int, float]) -> str:
@@ -59,12 +65,14 @@ XP_PARAMS_KEY = {
     "xp_edition": ["strategy", "edition"],
     "xp_edition_mlm_params": ["window", "edition"],
     "xp_edition_split_params": ["max_token_len", "max_split_nb", "edition"],
+    "xp_edition_propagate_order": ["pipeline", "edition"],
 }
 
 XP_GET_PARAMS_FN = {
     "xp_edition": get_params,
     "xp_edition_mlm_params": get_params_mlm,
     "xp_edition_split_params": get_params_split,
+    "xp_edition_propagate_order": get_params_propagate,
 }
 
 if __name__ == "__main__":
@@ -89,7 +97,7 @@ if __name__ == "__main__":
 
         lines = defaultdict(dict)
         for key, metric_dict in data.items():
-            metric_name, params = get_params(key)
+            metric_name, params = XP_GET_PARAMS_FN[xp_name](key)
             params_key = tuple(params[k] for k in XP_PARAMS_KEY[xp_name])
             lines[params_key][metric_name] = metric_dict["values"][0]
 
@@ -102,7 +110,11 @@ if __name__ == "__main__":
     df = pd.DataFrame(df_dict)
     print(df)
 
-    df = df.pivot(index="edition", columns="strategy", values=args.metric)
+    df = df.pivot(
+        index="edition",
+        columns=[k for k in XP_PARAMS_KEY[xp_name] if k != "edition"],
+        values=args.metric,
+    )
     df = df.reset_index().set_index("edition")
     df = df[df.mean().sort_values(ascending=False).index]
 
@@ -115,5 +127,6 @@ if __name__ == "__main__":
             (p.get_x() * 1.005, p.get_height() * 1.005),
             fontsize=12,
         )
+    ax.set_xlabel("Edition")
     ax.set_ylabel(METRIC_TO_YLABEL[args.metric])
     plt.show()
