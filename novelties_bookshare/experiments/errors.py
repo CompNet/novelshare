@@ -27,7 +27,9 @@ def _sample(token_dist: dict[str, float]) -> str:
 
 def substitute(tokens: list[str], subst_nb: int) -> list[str]:
     token_dist = _token_dist(tokens)
-    indices = np.random.choice(list(range(len(tokens))), subst_nb, replace=False)
+    indices = np.random.choice(
+        list(range(len(tokens))), min(subst_nb, len(tokens)), replace=False
+    )
 
     noisy_tokens = copy.deepcopy(tokens)
     for i in indices:
