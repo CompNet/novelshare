@@ -122,6 +122,10 @@ if __name__ == "__main__":
     )
     df = df.reset_index().set_index("edition")
     df = df[df.mean().sort_values(ascending=False).index]
+    try:  # if possible, sort columns in ascending order
+        df = df.sort_index(axis=1, key=lambda x: x.astype(int))
+    except ValueError:
+        pass
 
     plt.style.use("science")
     plt.rcParams.update({"font.size": 16})
