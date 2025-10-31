@@ -8,43 +8,48 @@ import pandas as pd
 
 
 def get_params(metric_key: str) -> tuple[str, dict[str, str]]:
-    # s=strat.e=edition.error_nb
-    m = re.match(r"s=([^\.]+)\.e=([^\.]+)\.(.*)", metric_key)
+    # s=strat.e=novel,edition.error_nb
+    m = re.match(r"s=([^\.]+)\.e=([^\,]+),([^\.]+)\.(.*)", metric_key)
     if m is None:
         return "", {}
-    strat, edition, metric_name = m.groups()
-    return metric_name, {"strategy": strat, "edition": edition}
+    strat, novel, edition, metric_name = m.groups()
+    return metric_name, {
+        "strategy": strat,
+        "novel": novel,
+        "edition": edition,
+    }
 
 
 def get_params_mlm(metric_key: str) -> tuple[str, dict[str, str]]:
-    # w=window.e=edition.metric_name
-    m = re.match(r"w=([^\.]+)\.e=([^\.]+)\.(.*)", metric_key)
+    # w=window.e=novel,edition.metric_name
+    m = re.match(r"w=([^\.]+)\.e=([^\,]+),([^\.]+)\.(.*)", metric_key)
     if m is None:
         return "", {}
-    window, edition, metric_name = m.groups()
-    return metric_name, {"window": window, "edition": edition}
+    window, novel, edition, metric_name = m.groups()
+    return metric_name, {"window": window, "novel": novel, "edition": edition}
 
 
 def get_params_split(metric_key: str) -> tuple[str, dict[str, str]]:
     # t=max_token_len.s=max_split_nb.e=edition.metric_name
-    m = re.match(r"t=([^\.]+)\.s=([^\.]+)\.e=([^\.]+)\.(.*)", metric_key)
+    m = re.match(r"t=([^\.]+)\.s=([^\.]+)\.e=([^\,]+),([^\.]+)\.(.*)", metric_key)
     if m is None:
         return "", {}
-    max_token_len, max_split_nb, edition, metric_name = m.groups()
+    max_token_len, max_split_nb, novel, edition, metric_name = m.groups()
     return metric_name, {
         "max_token_len": max_token_len,
         "max_split_nb": max_split_nb,
+        "novel": novel,
         "edition": edition,
     }
 
 
 def get_params_propagate(metric_key: str) -> tuple[str, dict[str, str]]:
     # p=pipeline.e=edition
-    m = re.match(r"p=([^\.]+)\.e=([^\.]+)\.(.*)", metric_key)
+    m = re.match(r"p=([^\.]+)\.e=([^\,]+),([^\.]+)\.(.*)", metric_key)
     if m is None:
         return "", {}
-    pipeline, edition, metric_name = m.groups()
-    return metric_name, {"pipeline": pipeline, "edition": edition}
+    pipeline, novel, edition, metric_name = m.groups()
+    return metric_name, {"pipeline": pipeline, "edition": edition, "novel": novel}
 
 
 def format_bar_height(bar_value: Union[int, float]) -> str:

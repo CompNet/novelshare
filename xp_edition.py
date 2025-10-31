@@ -30,7 +30,7 @@ ex.observers.append(FileStorageObserver("runs"))
 
 @ex.config
 def config():
-    edition_set: str
+    novel: str
     hash_len: int = 64
     chapter_limit: Optional[int] = None
     device: Literal["auto", "cuda", "cpu"] = "auto"
@@ -39,25 +39,25 @@ def config():
 @ex.automain
 def main(
     _run: Run,
-    edition_set: str,
+    novel: str,
     hash_len: int,
     chapter_limit: Optional[int],
     device: Literal["auto", "cuda", "cpu"],
 ):
     print_config(_run)
-    assert edition_set in EDITION_SETS
+    assert novel in EDITION_SETS
     assert hash_len > 0 and hash_len <= 64
 
-    reference_edition = list(EDITION_SETS[edition_set].keys())[0]
+    reference_edition = list(EDITION_SETS[novel].keys())[0]
     reference_chapters = list(
         iter_book_chapters(
-            EDITION_SETS[edition_set][reference_edition], chapter_limit=chapter_limit
+            EDITION_SETS[novel][reference_edition], chapter_limit=chapter_limit
         )
     )
 
     wild_editions = {
         key: list(iter_book_chapters(path, chapter_limit=chapter_limit))
-        for key, path in EDITION_SETS[edition_set].items()
+        for key, path in EDITION_SETS[novel].items()
         if key != reference_edition
     }
 
@@ -118,7 +118,7 @@ def main(
             t1 = time.process_time()
 
             reference_tokens = list(flatten(reference_chapters))
-            setup_name = f"s={strat}.e={edition}"
+            setup_name = f"s={strat}.e={novel},{edition}"
             record_decryption_metrics_(
                 _run,
                 setup_name,
