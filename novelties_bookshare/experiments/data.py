@@ -3,6 +3,25 @@ import re
 import pathlib as pl
 from novelties_bookshare.conll import load_conll2002_bio
 
+EDITION_SETS = {
+    "Brave_New_World": {
+        "HC98": "./data/Brave_New_World/HC98",
+        "HC06": "./data/Brave_New_World/HC06",
+        "HC04": "./data/Brave_New_World/HC04",
+        "RB06": "./data/Brave_New_World/RB06",
+    },
+    "Frankenstein": {
+        "PG84": "./data/Frankenstein/PG84",
+        "PG41445": "./data/Frankenstein/PG41445",
+        "PG42324": "./data/Frankenstein/PG42324",
+    },
+    "Moby_Dick": {
+        "PG15": "./data/Moby_Dick/PG15",
+        "PG2489": "./data/Moby_Dick/PG2489",
+        "PG2701": "./data/Moby_Dick/PG2701",
+    },
+}
+
 
 def iter_book_chapters(
     path: pl.Path | str, chapter_limit: Optional[int] = None

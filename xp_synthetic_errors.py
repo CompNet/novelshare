@@ -84,7 +84,14 @@ def main(
     assert 1 <= min_hash_len <= 64
     assert 2 <= max_hash_len <= 65
 
-    corpus = [pl.Path("./data/editions_diff/Moby_Dick/Novelties")]
+    corpus = [
+        pl.Path("./data/Frankenstein/PG84/"),
+        pl.Path("./data/Frankenstein/PG41445/"),
+        pl.Path("./data/Frankenstein/PG42324/"),
+        pl.Path("./data/Moby_Dick/PG15/"),
+        pl.Path("./data/Moby_Dick/PG2489/"),
+        pl.Path("./data/Moby_Dick/PG2701/"),
+    ]
 
     strategies = [
         Strategy("naive", decrypt_tokens),
