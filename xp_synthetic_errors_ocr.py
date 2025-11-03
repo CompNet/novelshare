@@ -170,9 +170,7 @@ def main(
         ):
             gold_tokens = list(flatten(gold_chapters))
             book_path, strategy, (wer, cer) = setups[job_i]
-            setup_name = (
-                f"b={book_path.name}.s={strategy.name}.n=ocr_scramble.w={wer}.c={cer}"
-            )
+            setup_name = f"b={book_path.name}.s={strategy.name}.n=ocr_scramble"
             record_decryption_metrics_(
                 _run, setup_name, gold_tokens, decrypted_tokens, duration_s
             )
