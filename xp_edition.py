@@ -84,7 +84,7 @@ def main(
                 max_token_len=split_max_token_len, max_splits_nb=split_max_splits_nb
             )
         ],
-        "bert": [
+        "mlm": [
             make_plugin_mlm(
                 "answerdotai/ModernBERT-base", window=mlm_window, device=device
             )
