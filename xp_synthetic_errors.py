@@ -58,8 +58,8 @@ class Strategy:
 
 @ex.config
 def config():
-    min_errors: int
-    max_errors: int
+    min_errors: int  # per chapter
+    max_errors: int  # per chapter
     errors_step: int
     hash_len: int = 64
     chapter_limit: Optional[int] = None
@@ -180,7 +180,7 @@ def main(
     setups = list(it.product(corpus, strategies, errors_fns, nb_errors))
     progress = tqdm(total=len(setups), ascii=True)
 
-    with Parallel(n_jobs=jobs_nb, return_as="generator_unordered") as parallel:
+    with Parallel(n_jobs=jobs_nb) as parallel:
         for job_i, gold_chapters, decrypted_tokens, duration_s in parallel(
             delayed(decrypt_setup_test)(i, *args) for i, args in enumerate(setups)
         ):

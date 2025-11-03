@@ -164,7 +164,7 @@ def main(
     setups = list(it.product(corpus, strategies, zip(wer_grid, cer_grid)))
     progress = tqdm(total=len(setups), ascii=True)
 
-    with Parallel(n_jobs=jobs_nb, return_as="generator_unordered") as parallel:
+    with Parallel(n_jobs=jobs_nb) as parallel:
         for job_i, gold_chapters, decrypted_tokens, duration_s in parallel(
             delayed(decrypt_setup_test)(i, *args) for i, args in enumerate(setups)
         ):
