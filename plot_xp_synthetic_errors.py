@@ -9,11 +9,19 @@ import matplotlib.pyplot as plt
 @ft.lru_cache
 def get_params(metric_key: str) -> dict[str, str]:
     # form of each metric
-    # b=book.s=strat.n=noise.recovered_tokens_proportion
-    m = re.match(r"b=([^\.]+)\.s=([^\.]+)\.n=([^\.]+)\.(.*)", metric_key)
-    if m is None:
-        return {}
-    book, strat, noise, metric = m.groups()
+    # b=book.s=strat.n=noise.metric_name
+    # or
+    # b=book.s=strat.n=noise.w=target_wer.c=target_cer.metric_name
+    m = re.match(
+        r"b=([^\.]+)\.s=([^\.]+)\.n=([^\.]+)\.w=([^c]+)\.c=([^a-z]+)\.(.*)", metric_key
+    )
+    if not m is None:
+        book, strat, noise, wer, cer, metric = m.groups()
+    else:
+        m = re.match(r"b=([^\.]+)\.s=([^\.]+)\.n=([^\.]+)\.(.*)", metric_key)
+        if m is None:
+            return {}
+        book, strat, noise, metric = m.groups()
     return {
         "book": book,
         "strat": strat,
@@ -24,7 +32,7 @@ def get_params(metric_key: str) -> dict[str, str]:
 
 def load_metrics(run: pl.Path) -> dict:
     # load metrics
-    with open(args.run / "metrics.json") as f:
+    with open(run / "metrics.json") as f:
         metrics = json.load(f)
     # some metrics are not ordered in terms of steps
     for v in metrics.values():
