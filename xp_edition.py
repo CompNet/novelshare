@@ -34,6 +34,9 @@ def config():
     hash_len: int = 64
     chapter_limit: Optional[int] = None
     device: Literal["auto", "cuda", "cpu"] = "auto"
+    split_max_token_len: int = 16
+    split_max_splits_nb: int = 8
+    mlm_window: int = 32
 
 
 @ex.automain
@@ -43,6 +46,9 @@ def main(
     hash_len: int,
     chapter_limit: Optional[int],
     device: Literal["auto", "cuda", "cpu"],
+    split_max_token_len: int,
+    split_max_splits_nb: int,
+    mlm_window: int,
 ):
     print_config(_run)
     assert novel in EDITION_SETS
@@ -73,24 +79,37 @@ def main(
         "naive": None,
         "case": [make_plugin_case()],
         "propagate": [make_plugin_propagate()],
-        "split": [make_plugin_split(max_token_len=24, max_splits_nb=4)],
+        "split": [
+            make_plugin_split(
+                max_token_len=split_max_token_len, max_splits_nb=split_max_splits_nb
+            )
+        ],
         "bert": [
-            make_plugin_mlm("answerdotai/ModernBERT-base", window=16, device=device)
+            make_plugin_mlm(
+                "answerdotai/ModernBERT-base", window=mlm_window, device=device
+            )
         ],
         "pipe": [
             make_plugin_propagate(),
             make_plugin_case(),
-            make_plugin_split(max_token_len=24, max_splits_nb=4),
-            make_plugin_mlm("answerdotai/ModernBERT-base", window=16, device=device),
+            make_plugin_split(
+                max_token_len=split_max_token_len, max_splits_nb=split_max_splits_nb
+            ),
+            make_plugin_mlm(
+                "answerdotai/ModernBERT-base", window=mlm_window, device=device
+            ),
         ],
         "cycle": [
             make_plugin_cycle(
                 [
                     make_plugin_propagate(),
                     make_plugin_case(),
-                    make_plugin_split(max_token_len=24, max_splits_nb=4),
+                    make_plugin_split(
+                        max_token_len=split_max_token_len,
+                        max_splits_nb=split_max_splits_nb,
+                    ),
                     make_plugin_mlm(
-                        "answerdotai/ModernBERT-base", window=16, device=device
+                        "answerdotai/ModernBERT-base", window=mlm_window, device=device
                     ),
                 ],
                 budget=None,
