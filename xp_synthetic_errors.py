@@ -1,3 +1,4 @@
+from copy import error
 from typing import Callable, Literal, Optional
 import time
 import pathlib as pl
@@ -6,6 +7,7 @@ import itertools as it
 from dataclasses import dataclass
 from more_itertools import flatten
 from tqdm import tqdm
+import numpy as np
 from joblib import Parallel, delayed
 from sacred import Experiment
 from sacred.observers import FileStorageObserver
@@ -58,9 +60,9 @@ class Strategy:
 
 @ex.config
 def config():
-    min_errors: int  # per chapter
-    max_errors: int  # per chapter
-    errors_step: int
+    min_error_ratio: float
+    max_error_ratio: float
+    error_ratio_step: float
     hash_len: int = 64
     chapter_limit: Optional[int] = None
     jobs_nb: int = 1
@@ -70,17 +72,17 @@ def config():
 @ex.automain
 def main(
     _run: Run,
-    min_errors: int,
-    max_errors: int,
-    errors_step: int,
+    min_error_ratio: float,
+    max_error_ratio: float,
+    error_ratio_step: float,
     hash_len: int,
     chapter_limit: Optional[int],
     jobs_nb: int,
     device: Literal["auto", "cuda", "cpu"],
 ):
     print_config(_run)
-    assert min_errors >= 0
-    assert max_errors > min_errors
+    assert min_error_ratio >= 0
+    assert max_error_ratio > min_error_ratio
     assert hash_len > 0 and hash_len <= 64
 
     corpus = [
@@ -152,16 +154,18 @@ def main(
 
     errors_fns = [substitute, delete, add, token_split, token_merge]
     for errors_fn in errors_fns:
-        _run.info[f"{errors_fn.__name__}.errors_unit"] = "number of errors"
+        _run.info[f"{errors_fn.__name__}.errors_unit"] = "Ratio of syntethic errors"
 
-    nb_errors = list(range(min_errors, max_errors, errors_step))
+    error_ratio = [
+        float(i) for i in np.arange(min_error_ratio, max_error_ratio, error_ratio_step)
+    ]
 
     def decrypt_setup_test(
         job_i: int,
         book_path: pl.Path,
         strategy: Strategy,
-        errors_fn: Callable[[list[str], float], list[str]],
-        nb_errors: float,
+        errors_fn: Callable[[list[str], int], list[str]],
+        error_ratio: float,
     ) -> tuple[int, list[list[str]], list[str], float]:
         t0 = time.process_time()
         chapters = list(iter_book_chapters(book_path, chapter_limit=chapter_limit))
@@ -169,7 +173,7 @@ def main(
             encrypt_tokens(chapter, hash_len=hash_len) for chapter in chapters
         ]
         user_chapters = [
-            errors_fn(chapter, nb_errors // len(chapters)) for chapter in chapters
+            errors_fn(chapter, int(len(chapter) * error_ratio)) for chapter in chapters
         ]
         decrypted_tokens = strategy.decrypt_fn(
             encrypted_chapters, user_chapters, hash_len
@@ -177,7 +181,7 @@ def main(
         t1 = time.process_time()
         return job_i, chapters, decrypted_tokens, t1 - t0
 
-    setups = list(it.product(corpus, strategies, errors_fns, nb_errors))
+    setups = list(it.product(corpus, strategies, errors_fns, error_ratio))
     progress = tqdm(total=len(setups), ascii=True)
 
     with Parallel(n_jobs=jobs_nb) as parallel:
@@ -185,7 +189,7 @@ def main(
             delayed(decrypt_setup_test)(i, *args) for i, args in enumerate(setups)
         ):
             gold_tokens = list(flatten(gold_chapters))
-            book_path, strategy, errors_fn, nb_errors = setups[job_i]
+            book_path, strategy, errors_fn, error_ratio = setups[job_i]
             setup_name = f"b={book_path.name}.s={strategy.name}.n={errors_fn.__name__}"
             record_decryption_metrics_(
                 _run, setup_name, gold_tokens, decrypted_tokens, duration_s
