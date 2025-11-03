@@ -129,15 +129,18 @@ if __name__ == "__main__":
 
     # plot
     os.makedirs(args.output_dir, exist_ok=True)
+    cols_nb = 3
 
     # one subplot per "noise"
     # pick "book" to split curves
     for strat in set(df["strat"]):
         noises = list(set(df["noise"]))
-        fig, axs = plt.subplots(math.ceil(len(noises) / 2), 2, figsize=(12, 8))
+        fig, axs = plt.subplots(
+            math.ceil(len(noises) / cols_nb), cols_nb, figsize=(16, 6)
+        )
         fig.suptitle(strat)
         for i, noise in enumerate(noises):
-            ax = axs[i // 2][i % 2]
+            ax = axs[i // cols_nb][i % cols_nb]
             ax_df = df[(df["strat"] == strat) & (df["noise"] == noise)]
             for book in set(df["book"]):
                 ax_df[ax_df["book"] == book].plot(  # type: ignore
@@ -154,10 +157,12 @@ if __name__ == "__main__":
     # pick "strat" to split curves
     for book in set(df["book"]):
         noises = list(set(df["noise"]))
-        fig, axs = plt.subplots(math.ceil(len(noises) / 2), 2, figsize=(12, 8))
+        fig, axs = plt.subplots(
+            math.ceil(len(noises) / cols_nb), cols_nb, figsize=(16, 8)
+        )
         fig.suptitle(book)
         for i, noise in enumerate(noises):
-            ax = axs[i // 2][i % 2]
+            ax = axs[i // cols_nb][i % cols_nb]
             ax_df = df[(df["book"] == book) & (df["noise"] == noise)]
             for strat in set(df["strat"]):
                 ax_df[ax_df["strat"] == strat].plot(  # type: ignore
