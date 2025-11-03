@@ -67,7 +67,7 @@ HASH_LEN_ARRAY=(1 3 4 64) # NOTE: hash_len=2 is already done above so we skip it
 for novel in ${NOVELS[@]}; do
     for hash_len in ${HASH_LEN_ARRAY[@]}; do
         python xp_edition.py\
-            --id="xp_edition_n=${novel}_h=2"\
+            --id="xp_edition_n=${novel}_h=${hash_len}"\
             with\
             novel="$novel"\
             hash_len=$hash_len\
