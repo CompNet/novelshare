@@ -36,8 +36,8 @@ python xp_synthetic_errors.py\
         with\
         hash_len=2\
         min_error_ratio=0.0\
-        max_error_ratio=0.15\
-        error_ratio_step=0.01\
+        max_error_ratio=0.2\
+        error_ratio_step=0.02\
         jobs_nb=2\
         device=cuda
 
