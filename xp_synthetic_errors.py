@@ -1,4 +1,3 @@
-from copy import error
 from typing import Callable, Literal, Optional
 import time
 import pathlib as pl
@@ -24,7 +23,7 @@ from novelties_bookshare.decrypt import (
 )
 from novelties_bookshare.decrypt import decrypt_tokens
 from novelties_bookshare.experiments.data import iter_book_chapters
-from novelties_bookshare.experiments.metrics import record_decryption_metrics_
+from novelties_bookshare.experiments.metrics import errors_nb, errors_percent
 from novelties_bookshare.experiments.errors import (
     substitute,
     delete,
@@ -184,14 +183,23 @@ def main(
     setups = list(it.product(corpus, strategies, errors_fns, error_ratio))
     progress = tqdm(total=len(setups), ascii=True)
 
-    with Parallel(n_jobs=jobs_nb) as parallel:
+    with Parallel(n_jobs=jobs_nb, return_as="generator_unordered") as parallel:
         for job_i, gold_chapters, decrypted_tokens, duration_s in parallel(
             delayed(decrypt_setup_test)(i, *args) for i, args in enumerate(setups)
         ):
             gold_tokens = list(flatten(gold_chapters))
             book_path, strategy, errors_fn, error_ratio = setups[job_i]
             setup_name = f"b={book_path.name}.s={strategy.name}.n={errors_fn.__name__}"
-            record_decryption_metrics_(
-                _run, setup_name, gold_tokens, decrypted_tokens, duration_s
+            _run.log_scalar(
+                f"{setup_name}.errors_nb",
+                errors_nb(gold_tokens, decrypted_tokens),
+                step=error_ratio,
             )
+            _run.log_scalar(
+                f"{setup_name}.errors_percent",
+                errors_percent(gold_tokens, decrypted_tokens),
+                step=error_ratio,
+            )
+            _run.log_scalar(f"{setup_name}.duration_s", duration_s)
+
             progress.update()
