@@ -83,6 +83,9 @@ def main(
     strategies = [
         Strategy("naive", decrypt_tokens),
         Strategy(
+            "case", ft.partial(decrypt_tokens, decryption_plugins=[make_plugin_case()])
+        ),
+        Strategy(
             "propagate",
             ft.partial(decrypt_tokens, decryption_plugins=[make_plugin_propagate()]),
         ),
@@ -96,7 +99,7 @@ def main(
             ),
         ),
         Strategy(
-            "bert",
+            "mlm",
             ft.partial(
                 decrypt_tokens,
                 decryption_plugins=[
