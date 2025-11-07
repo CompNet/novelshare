@@ -4,7 +4,10 @@ import functools as ft
 import pathlib as pl
 import pandas as pd
 import numpy as np
+import scienceplots
 import matplotlib.pyplot as plt
+
+MARKERS = ["X", "p", "*", "D", "^", "v", "1", "o", "s"]
 
 
 @ft.lru_cache
@@ -137,6 +140,8 @@ if __name__ == "__main__":
     os.makedirs(args.output_dir, exist_ok=True)
     cols_nb = 3
 
+    plt.style.use("science")
+    plt.rcParams.update({"font.size": 16})
     # one subplot per "noise"
     # pick "book" to split curves
     for strat in set(df["strat"]):
@@ -148,14 +153,20 @@ if __name__ == "__main__":
         for i, noise in enumerate(noises):
             ax = axs[i // cols_nb][i % cols_nb]
             ax_df = df[(df["strat"] == strat) & (df["noise"] == noise)]
-            for book in set(df["book"]):
+            for j, book in enumerate(set(df["book"])):
                 ax_df[ax_df["book"] == book].plot(  # type: ignore
-                    ax=ax, x="steps", y="values", title=noise, label=book
+                    ax=ax,
+                    x="steps",
+                    y="values",
+                    title=noise,
+                    label=book,
+                    marker=MARKERS[j],
                 )
             ax.set_ylabel(METRIC2PRETTY[args.metric])
             ax.set_xlabel(info.get(f"{noise}.errors_unit", "steps"))
+            ax.grid()
         plt.tight_layout()
-        out_path = args.output_dir / f"perbook_{strat}.png"
+        out_path = args.output_dir / f"perbook_{strat}.pdf"
         print(f"saving {out_path}")
         plt.savefig(out_path)
         plt.close("all")
@@ -170,13 +181,19 @@ if __name__ == "__main__":
         for i, noise in enumerate(noises):
             ax = axs[i // cols_nb][i % cols_nb]
             ax_df = df[(df["book"] == book) & (df["noise"] == noise)]
-            for strat in set(df["strat"]):
+            for j, strat in enumerate(set(df["strat"])):
                 ax_df[ax_df["strat"] == strat].plot(  # type: ignore
-                    ax=ax, x="steps", y="values", title=noise, label=strat
+                    ax=ax,
+                    x="steps",
+                    y="values",
+                    title=noise,
+                    label=strat,
+                    marker=MARKERS[j],
                 )
             ax.set_ylabel(METRIC2PRETTY[args.metric])
             ax.set_xlabel(info.get(f"{noise}.errors_unit", "steps"))
+            ax.grid()
         plt.tight_layout()
-        out_path = args.output_dir / f"perstrat_{book}.png"
+        out_path = args.output_dir / f"perstrat_{book}.pdf"
         print(f"saving {out_path}")
         plt.savefig(out_path)
