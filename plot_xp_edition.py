@@ -121,7 +121,7 @@ if __name__ == "__main__":
         type=str,
         help="one of: 'errors_nb', 'duration_s', 'errors_percent', 'entity_errors_nb', 'entity_errors_percent'",
     )
-    parser.add_argument("-o", "--output-dir", type=pl.Path)
+    parser.add_argument("-o", "--output-file", type=pl.Path, default=None)
     args = parser.parse_args()
 
     assert len(args.runs) > 0
@@ -155,4 +155,10 @@ if __name__ == "__main__":
         )
     ax.set_xlabel("Edition")
     ax.set_ylabel(METRIC_TO_YLABEL[args.metric])
-    plt.show()
+
+    fig = plt.gcf()
+    fig.set_size_inches(16, 8)
+    if not args.output_file is None:
+        plt.savefig(args.output_file)
+    else:
+        plt.show()
