@@ -80,24 +80,14 @@ XP_GET_PARAMS_FN = {
     "xp_edition_propagate_order": get_params_propagate,
 }
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-r", "--run", type=pl.Path)
-    parser.add_argument(
-        "-m",
-        "--metric",
-        type=str,
-        help="one of: 'errors_nb', 'duration_s', 'errors_percent', 'entity_errors_nb', 'entity_errors_percent'",
-    )
-    parser.add_argument("-o", "--output-dir", type=pl.Path)
-    args = parser.parse_args()
 
-    with open(args.run / "run.json") as f:
+def load_xp(path: pl.Path) -> tuple[str, pd.DataFrame]:
+    with open(path / "run.json") as f:
         run_data = json.load(f)
     xp_name = run_data["experiment"]["name"]
 
     df_dict = defaultdict(list)
-    with open(args.run / "metrics.json") as f:
+    with open(path / "metrics.json") as f:
         data = json.load(f)
 
         lines = defaultdict(dict)
@@ -113,6 +103,33 @@ if __name__ == "__main__":
                 df_dict[key].append(value)
 
     df = pd.DataFrame(df_dict)
+    return xp_name, df
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-r",
+        "--runs",
+        nargs="*",
+        type=pl.Path,
+        help="A list of runs to plot. They must be of same nature (i.e. obtained with the same experiment script).",
+    )
+    parser.add_argument(
+        "-m",
+        "--metric",
+        type=str,
+        help="one of: 'errors_nb', 'duration_s', 'errors_percent', 'entity_errors_nb', 'entity_errors_percent'",
+    )
+    parser.add_argument("-o", "--output-dir", type=pl.Path)
+    args = parser.parse_args()
+
+    assert len(args.runs) > 0
+    xp_name, df = load_xp(args.runs[0])
+    for run in args.runs[1:]:
+        run_xp_name, run_df = load_xp(run)
+        df = pd.concat([df, run_df])
+    print(f"{xp_name=}")
     print(df)
 
     df = df.pivot(
