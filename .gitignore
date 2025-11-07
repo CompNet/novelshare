@@ -105,3 +105,9 @@ venv.bak/
 
 # emacs/vim
 *~
+.projectile
+.dir-locals.el
+
+# project specific
+runs/
+plots/
