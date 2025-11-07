@@ -1,17 +1,22 @@
+import argparse
+import pathlib as pl
 from collections import defaultdict
 from statistics import mean
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 import scienceplots
 from novelties_bookshare.encrypt import encrypt_tokens
-from novelties_bookshare.experiments.data import load_book
+from novelties_bookshare.experiments.data import load_book, EDITION_SETS
 
 if __name__ == "__main__":
-    tokens = (
-        load_book("./data/editions_diff/Moby_Dick/PG15/")
-        + load_book("./data/editions_diff/Moby_Dick/PG2489/")
-        + load_book("./data/editions_diff/Moby_Dick/PG2701/")
-    )
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-o", "--output-file", type=pl.Path, default=None)
+    args = parser.parse_args()
+
+    tokens = []
+    for novel, edition_sets in EDITION_SETS.items():
+        for path in edition_sets.values():
+            tokens += load_book(path)
 
     x = list(range(1, 65))
     y = []
@@ -27,7 +32,7 @@ if __name__ == "__main__":
     y = [value for value in y if value > 0.01]
 
     plt.style.use("science")
-    plt.rcParams.update({"font.size": 42})
+    plt.rcParams.update({"font.size": 46})
     plt.bar([str(i + 1) for i in range(len(y))], y)
     ax = plt.gca()
     for p in ax.patches:
@@ -36,8 +41,16 @@ if __name__ == "__main__":
             (p.get_x() + p.get_width() / 2, p.get_height()),
             ha="center",
             va="bottom",
-            fontsize=40,
+            fontsize=42,
         )
-    plt.ylabel("Mean number of hash collisions")
+    ax.set_ylim((0, max(y) + 256))
+    plt.ylabel("Mean collisions per token", fontsize=36)
     plt.xlabel("Hash length")
-    plt.show()
+    plt.tight_layout()
+
+    fig = plt.gcf()
+    fig.set_size_inches(16, 8)
+    if not args.output_file is None:
+        plt.savefig(args.output_file)
+    else:
+        plt.show()
