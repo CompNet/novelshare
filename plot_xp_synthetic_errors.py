@@ -3,6 +3,7 @@ from collections import defaultdict
 import functools as ft
 import pathlib as pl
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 
 
@@ -56,9 +57,14 @@ def load_info(run: pl.Path) -> dict:
 
 def get_steps(noise: str, config: dict) -> list:
     if noise in {"add", "delete", "substitute", "token_merge", "token_split"}:
-        return list(
-            range(config["min_errors"], config["max_errors"], config["errors_step"])
-        )
+        return [
+            float(step)
+            for step in np.arange(
+                config["min_error_ratio"],
+                config["max_error_ratio"],
+                config["error_ratio_step"],
+            )
+        ]
     elif noise == "ocr_scramble":
         return list(zip(config["wer_grid"], config["cer_grid"]))
     else:
