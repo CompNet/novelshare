@@ -1,3 +1,0 @@
-Compared to the other two editions, this one does not have the same number of chapters. Furthermore, chapter 1 [^1] is different in this edition.
-
-[^1] Note that chapter 1 refers to chapter_5.conll here, because the novel starts with 4 "letters" that we considered to be chapters.
