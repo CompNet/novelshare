@@ -60,10 +60,6 @@ def main(
     for chapters in wild_editions.values():
         normalize_(chapters)
 
-    reference_encrypted = [
-        encrypt_tokens(chapter, hash_len=hash_len) for chapter in reference_chapters
-    ]
-
     progress = tqdm(
         total=len(wild_editions) * len(max_token_len_range) * len(max_splits_nb_range),
         ascii=True,
@@ -75,6 +71,18 @@ def main(
                 progress.set_description(
                     f"{edition}.t={max_token_len}.s={max_split_nb}"
                 )
+
+                reference_encrypted = [
+                    encrypt_tokens(chapter, hash_len=hash_len)
+                    for chapter in reference_chapters
+                ]
+                # If we have the same number of chapters, we assume that
+                # the chapters are aligned. Otherwise, we have to perform
+                # alignment on the entire novels, not on individual
+                # chapters (more costly!)
+                if len(reference_chapters) != len(user_tokens):
+                    reference_encrypted = list(flatten(reference_encrypted))
+                    user_tokens = list(flatten(user_tokens))
 
                 split = make_plugin_split(max_token_len, max_split_nb)
                 t0 = time.process_time()
