@@ -14,7 +14,6 @@ from novelties_bookshare.decrypt import (
     make_plugin_propagate,
     make_plugin_split,
     make_plugin_case,
-    make_plugin_cycle,
 )
 from novelties_bookshare.experiments.data import (
     iter_book_chapters,
@@ -94,22 +93,6 @@ def main(
             make_plugin_mlm(
                 "answerdotai/ModernBERT-base", window=mlm_window, device=device
             ),
-        ],
-        "cycle": [
-            make_plugin_cycle(
-                [
-                    make_plugin_propagate(),
-                    make_plugin_case(),
-                    make_plugin_split(
-                        max_token_len=split_max_token_len,
-                        max_splits_nb=split_max_splits_nb,
-                    ),
-                    make_plugin_mlm(
-                        "answerdotai/ModernBERT-base", window=mlm_window, device=device
-                    ),
-                ],
-                budget=None,
-            )
         ],
     }
     # { strategy => { edition => { ref_token => [ incorrect pred tokens ] } } }
