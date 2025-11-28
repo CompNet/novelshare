@@ -10,9 +10,9 @@ EDITION_SETS = {
         "F-1831": "./data/Frankenstein/F-1831",
     },
     "Moby_Dick": {
-        "PG15": "./data/Moby_Dick/PG15",
-        "PG2489": "./data/Moby_Dick/PG2489",
-        "PG2701": "./data/Moby_Dick/PG2701",
+        "MB-1851-US": "./data/Moby_Dick/MB-1851-US",
+        "MB-1851-UK": "./data/Moby_Dick/MB-1851-UK",
+        "MB-1988": "./data/Moby_Dick/MB-1988",
     },
     "Pride_and_Prejudice": {
         "PG1342": "./data/PrideAndPrejudice/PG1342",
