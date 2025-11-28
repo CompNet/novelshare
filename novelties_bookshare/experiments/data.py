@@ -15,8 +15,9 @@ EDITION_SETS = {
         "MB-1988": "./data/Moby_Dick/MB-1988",
     },
     "Pride_and_Prejudice": {
-        "PG1342": "./data/PrideAndPrejudice/PG1342",
-        "PG42671": "./data/PrideAndPrejudice/PG42671",
+        "PP-1813": "./data/Pride_and_Prejudice/PP-1813",
+        "PP-1817": "./data/Pride_and_Prejudice/PP-1817",
+        "PP-1894": "./data/Pride_and_Prejudice/PP-1894",
     },
 }
 
