@@ -14,7 +14,6 @@ from novelties_bookshare.decrypt import (
     make_plugin_propagate,
     make_plugin_split,
     make_plugin_case,
-    make_plugin_cycle,
 )
 from novelties_bookshare.experiments.data import (
     iter_book_chapters,
@@ -71,10 +70,6 @@ def main(
     for chapters in wild_editions.values():
         normalize_(chapters)
 
-    reference_encrypted = [
-        encrypt_tokens(chapter, hash_len=hash_len) for chapter in reference_chapters
-    ]
-
     strategies = {
         "naive": None,
         "case": [make_plugin_case()],
@@ -99,22 +94,6 @@ def main(
                 "answerdotai/ModernBERT-base", window=mlm_window, device=device
             ),
         ],
-        "cycle": [
-            make_plugin_cycle(
-                [
-                    make_plugin_propagate(),
-                    make_plugin_case(),
-                    make_plugin_split(
-                        max_token_len=split_max_token_len,
-                        max_splits_nb=split_max_splits_nb,
-                    ),
-                    make_plugin_mlm(
-                        "answerdotai/ModernBERT-base", window=mlm_window, device=device
-                    ),
-                ],
-                budget=None,
-            )
-        ],
     }
     # { strategy => { edition => { ref_token => [ incorrect pred tokens ] } } }
     all_errors = {
@@ -126,6 +105,18 @@ def main(
     for edition, user_tokens in wild_editions.items():
         for strat, strat_plugins in strategies.items():
             progress.set_description(f"{edition}.{strat}")
+
+            reference_encrypted = [
+                encrypt_tokens(chapter, hash_len=hash_len)
+                for chapter in reference_chapters
+            ]
+            # If we have the same number of chapters, we assume that
+            # the chapters are aligned. Otherwise, we have to perform
+            # alignment on the entire novels, not on individual
+            # chapters (more costly!)
+            if len(reference_chapters) != len(user_tokens):
+                reference_encrypted = list(flatten(reference_encrypted))
+                user_tokens = list(flatten(user_tokens))
 
             t0 = time.process_time()
             decrypted_tokens = decrypt_tokens(

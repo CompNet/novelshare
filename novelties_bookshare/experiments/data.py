@@ -4,20 +4,10 @@ import pathlib as pl
 from novelties_bookshare.conll import load_conll2002_bio
 
 EDITION_SETS = {
-    # Since Brave_New_World is copyrighted, we refrain from doing
-    # experiments its editions.
-    # "Brave_New_World": {
-    #     "HC98": "./data/Brave_New_World/HC98",
-    #     "HC06": "./data/Brave_New_World/HC06",
-    #     "HC04": "./data/Brave_New_World/HC04",
-    #     "RB06": "./data/Brave_New_World/RB06",
-    # },
     "Frankenstein": {
-        "PG84": "./data/Frankenstein/PG84",
-        # we do not use PG41445 as it does not have the same number of
-        # chapters as the other two.
-        # "PG41445": "./data/Frankenstein/PG41445",
-        "PG42324": "./data/Frankenstein/PG42324",
+        "F-1818": "./data/Frankenstein/F-1818",
+        "F-1823": "./data/Frankenstein/F-1823",
+        "F-1831": "./data/Frankenstein/F-1831",
     },
     "Moby_Dick": {
         "PG15": "./data/Moby_Dick/PG15",
