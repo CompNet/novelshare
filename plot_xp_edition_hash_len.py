@@ -6,7 +6,7 @@ import scienceplots
 import pandas as pd
 from plot_xp_edition import get_params, METRIC_TO_YLABEL, XP_PARAMS_KEY
 
-MARKERS = ["X", "p", "*", "D", "^", "v", "1", "o", "s"]
+MARKERS = ["X", "p", "*", "D", "^", "v", "o", "s"]
 
 
 def load_xp(path: pl.Path) -> pd.DataFrame:
@@ -68,12 +68,21 @@ if __name__ == "__main__":
         strat_df.loc[:, "x"] = [
             i + 1 for i, _ in enumerate(sorted(set(strat_df["hash_len"])))
         ]
-        strat_df.plot(ax=ax, x="x", y=args.metric, label=strat, marker=MARKERS[i])
+        strat_df.plot(
+            ax=ax,
+            x="x",
+            y=args.metric,
+            label=strat,
+            marker=MARKERS[i],
+            linewidth=3,
+            markersize=16,
+        )
         ax.set_xticks(list(strat_df["x"]))
         ax.set_xticklabels(
             [str(hash_len) for hash_len in sorted(set(strat_df["hash_len"]))]
         )
     ax.grid()
+    ax.legend(ncols=2)
     ax.set_xlabel("Hash length")
     ax.set_ylabel(METRIC_TO_YLABEL[args.metric])
 
