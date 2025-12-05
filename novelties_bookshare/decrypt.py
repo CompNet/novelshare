@@ -1,14 +1,15 @@
 #!/usr/bin/python3
-from typing import Callable, List, Literal, Optional
+from typing import Callable, Literal, Optional
 import sys, os, argparse, difflib
 import functools as ft
+from collections import Counter
 from more_itertools import flatten
 from novelties_bookshare.conll import dump_conll2002_bio, load_conll2002_bio
 from novelties_bookshare.encrypt import encrypt_token, encrypt_tokens
 from novelties_bookshare.utils import strksplit
 
 
-def load_user_tokens(path: Optional[str], **kwargs) -> List[str]:
+def load_user_tokens(path: Optional[str], **kwargs) -> list[str]:
     if not path is None:
         with open(os.path.expanduser(path), **kwargs) as f:
             user_data = f.read()
@@ -35,21 +36,45 @@ def plugin_propagate(
     decrypted_tokens: list[str],
     encrypted_tokens: list[str],
     hash_len: Optional[int],
-) -> List[str]:
+) -> list[str]:
     """Propagate previous choices to non-decrypted tokens
 
     This decryption plugins tries to decrypt a substituted or deleted
     token if it was already decryped elsewhere in the text.
     """
+    # { hash => most_frequent_decoded_token }
+    hash_dict = {}
+
     for tag, i1, i2, _, _ in opcodes:
+        # the user did not supply some tokens, or supplied a wrong
+        # token. Maybe we did decode some of these tokens before
+        # else and we can use them to retrieve this token.
         if tag == "delete" or tag == "replace":
-            # the user did not supply some tokens, or supplied a wrong
-            # token. Maybe we did decode some of these tokens before
-            # else and we can use them to retrieve this token.
             for i, encrypted_token in enumerate(encrypted_tokens[i1:i2]):
-                for h, token in zip(encrypted_tokens, decrypted_tokens):
-                    if h == encrypted_token:
-                        decrypted_tokens[i1 + i] = token
+                # did we already see this encrypted_token before? If
+                # not, we need to find the most frequent decrypted
+                # token corresponding to this hash
+                if not encrypted_token in hash_dict:
+                    same_hash_counter = Counter(
+                        [
+                            token
+                            for hsh, token in zip(encrypted_tokens, decrypted_tokens)
+                            if hsh == encrypted_token and token != "[UNK]"
+                        ]
+                    )
+                    most_frequent_decoded_token = (
+                        max(same_hash_counter, key=same_hash_counter.get)  # type: ignore
+                        if len(same_hash_counter) > 0
+                        else None
+                    )
+                    hash_dict[encrypted_token] = most_frequent_decoded_token
+                # update the memory of most frequent decoded token for
+                # the current hash
+                most_frequent_decoded_token = hash_dict[encrypted_token]
+
+                if not most_frequent_decoded_token is None:
+                    decrypted_tokens[i1 + i] = most_frequent_decoded_token
+
     return decrypted_tokens
 
 
