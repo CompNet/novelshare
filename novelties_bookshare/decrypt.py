@@ -361,6 +361,16 @@ def decrypt_tokens(
 
     if not decryption_plugins is None:
         for plugin in decryption_plugins:
+            # the previous plugins may have fixed some errors. We
+            # remove the fixed cases there to prevent the next plugins
+            # to fix these errors again.
+            opcodes = [
+                (tag, i1, i2, j1, j2)
+                for oc in opcodes
+                if all(t != "[UNK]" for t in decrypted_tokens[i1:i2])
+                and encrypt_tokens(decrypted_tokens[i1:i2], hash_len=hash_len)
+                == encrypted_tokens[i1:i2]
+            ]
             decrypted_tokens = plugin(
                 opcodes, user_tokens, decrypted_tokens, encrypted_tokens, hash_len
             )
