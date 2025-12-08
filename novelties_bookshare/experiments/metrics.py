@@ -37,6 +37,13 @@ def entity_errors_percent(
     return errors_nb / len(entities)
 
 
+def precision_errors_nb(ref_tokens: list[str], pred_tokens: list[str]) -> float:
+    return sum(
+        1 if ref != pred and pred != "[UNK]" else 0
+        for ref, pred in zip(ref_tokens, pred_tokens)
+    )
+
+
 def errors(ref_tokens: list[str], pred_tokens: list[str]) -> dict[str, list[str]]:
     """Record errors for each reference token
 
@@ -59,6 +66,10 @@ def record_decryption_metrics_(
     _run.log_scalar(
         f"{setup_name}.errors_nb",
         errors_nb(ref_tokens, pred_tokens),
+    )
+    _run.log_scalar(
+        f"{setup_name}.precision_errors_nb",
+        precision_errors_nb(ref_tokens, pred_tokens),
     )
     _run.log_scalar(
         f"{setup_name}.errors_percent",
