@@ -60,6 +60,7 @@ def format_bar_height(bar_value: Union[int, float]) -> str:
 
 METRIC_TO_YLABEL = {
     "errors_nb": "Number of errors",
+    "precision_errors_nb": "Number of precision errors",
     "duration_s": "Duration in seconds",
     "errors_percent": "Percentage of errors",
     "entity_errors_nb": "Number of entity errors",
