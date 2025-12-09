@@ -85,14 +85,14 @@ def main(
             )
         ],
         "pipe": [
-            make_plugin_propagate(),
-            make_plugin_case(),
             make_plugin_split(
                 max_token_len=split_max_token_len, max_splits_nb=split_max_splits_nb
             ),
             make_plugin_mlm(
                 "answerdotai/ModernBERT-base", window=mlm_window, device=device
             ),
+            make_plugin_case(),
+            make_plugin_propagate(),
         ],
     }
     # { strategy => { edition => { ref_token => [ incorrect pred tokens ] } } }
