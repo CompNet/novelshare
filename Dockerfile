@@ -7,6 +7,6 @@ WORKDIR /novelties-bookshare
 RUN apt update -y
 
 RUN apt install -y git
-RUN uv sync --extra transformers-cuda
+RUN uv sync --python 3.13 --extra transformers-cuda
 
 CMD ["bash"]
