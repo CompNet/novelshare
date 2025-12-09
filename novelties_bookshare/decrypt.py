@@ -366,10 +366,8 @@ def decrypt_tokens(
             # to fix these errors again.
             opcodes = [
                 (tag, i1, i2, j1, j2)
-                for oc in opcodes
-                if all(t != "[UNK]" for t in decrypted_tokens[i1:i2])
-                and encrypt_tokens(decrypted_tokens[i1:i2], hash_len=hash_len)
-                == encrypted_tokens[i1:i2]
+                for tag, i1, i2, j1, j2 in opcodes
+                if any(t == "[UNK]" for t in decrypted_tokens[i1:i2])
             ]
             decrypted_tokens = plugin(
                 opcodes, user_tokens, decrypted_tokens, encrypted_tokens, hash_len
