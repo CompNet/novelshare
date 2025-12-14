@@ -66,23 +66,23 @@ def main(
     )
 
     for edition, user_tokens in wild_editions.items():
+        reference_encrypted = [
+            encrypt_tokens(chapter, hash_len=hash_len) for chapter in reference_chapters
+        ]
+        # If we have the same number of chapters, we assume that
+        # the chapters are aligned. Otherwise, we have to perform
+        # alignment on the entire novels, not on individual
+        # chapters (more costly!)
+        same_number_of_chapters = len(reference_chapters) == len(user_tokens)
+        if not same_number_of_chapters:
+            user_tokens = list(flatten(user_tokens))
+            reference_encrypted = list(flatten(reference_encrypted))
+
         for max_token_len in max_token_len_range:
             for max_split_nb in max_splits_nb_range:
                 progress.set_description(
                     f"{edition}.t={max_token_len}.s={max_split_nb}"
                 )
-
-                reference_encrypted = [
-                    encrypt_tokens(chapter, hash_len=hash_len)
-                    for chapter in reference_chapters
-                ]
-                # If we have the same number of chapters, we assume that
-                # the chapters are aligned. Otherwise, we have to perform
-                # alignment on the entire novels, not on individual
-                # chapters (more costly!)
-                if len(reference_chapters) != len(user_tokens):
-                    reference_encrypted = list(flatten(reference_encrypted))
-                    user_tokens = list(flatten(user_tokens))
 
                 split = make_plugin_split(max_token_len, max_split_nb)
                 t0 = time.process_time()

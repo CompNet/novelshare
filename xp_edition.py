@@ -103,20 +103,20 @@ def main(
     progress = tqdm(total=len(wild_editions) * len(strategies), ascii=True)
 
     for edition, user_tokens in wild_editions.items():
+        reference_encrypted = [
+            encrypt_tokens(chapter, hash_len=hash_len) for chapter in reference_chapters
+        ]
+        # If we have the same number of chapters, we assume that
+        # the chapters are aligned. Otherwise, we have to perform
+        # alignment on the entire novels, not on individual
+        # chapters (more costly!)
+        same_number_of_chapters = len(reference_chapters) == len(user_tokens)
+        if not same_number_of_chapters:
+            user_tokens = list(flatten(user_tokens))
+            reference_encrypted = list(flatten(reference_encrypted))
+
         for strat, strat_plugins in strategies.items():
             progress.set_description(f"{edition}.{strat}")
-
-            reference_encrypted = [
-                encrypt_tokens(chapter, hash_len=hash_len)
-                for chapter in reference_chapters
-            ]
-            # If we have the same number of chapters, we assume that
-            # the chapters are aligned. Otherwise, we have to perform
-            # alignment on the entire novels, not on individual
-            # chapters (more costly!)
-            if len(reference_chapters) != len(user_tokens):
-                reference_encrypted = list(flatten(reference_encrypted))
-                user_tokens = list(flatten(user_tokens))
 
             t0 = time.process_time()
             decrypted_tokens = decrypt_tokens(
