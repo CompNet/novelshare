@@ -74,9 +74,9 @@ def main(
     assert len(wer_grid) == len(cer_grid)
 
     corpus = [
-        pl.Path("./data/Frankenstein/PG84/"),
-        pl.Path("./data/Moby_Dick/PG15/"),
-        pl.Path("./data/PrideAndPrejudice/PG1342/"),
+        pl.Path("./data/Frankenstein/F-1818/"),
+        pl.Path("./data/Moby_Dick/MB-1851-US/"),
+        pl.Path("./data/Pride_and_Prejudice/PP-1813/"),
     ]
 
     strategies = [
