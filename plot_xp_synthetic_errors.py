@@ -189,6 +189,8 @@ if __name__ == "__main__":
                     title=noise,
                     label=strat,
                     marker=MARKERS[j],
+                    markersize=12 - j,
+                    alpha=0.75,
                 )
             ax.set_ylabel(METRIC2PRETTY[args.metric])
             ax.set_xlabel(info.get(f"{noise}.errors_unit", "steps"))
@@ -221,6 +223,8 @@ if __name__ == "__main__":
                 title=noise,
                 label=strat,
                 marker=MARKERS[j],
+                markersize=12 - j,
+                alpha=0.75,
             )
         ax.set_ylabel(METRIC2PRETTY[args.metric])
         ax.set_xlabel(info.get(f"{noise}.errors_unit", "steps"))
