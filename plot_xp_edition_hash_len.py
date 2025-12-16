@@ -44,6 +44,7 @@ if __name__ == "__main__":
         type=pl.Path,
         help="A list of runs to plot. They must be of same nature (i.e. obtained with the same experiment script).",
     )
+    parser.add_argument("-e", "--edition", type=str, help="selected edition")
     parser.add_argument(
         "-m",
         "--metric",
@@ -58,6 +59,7 @@ if __name__ == "__main__":
     for run in args.runs[1:]:
         run_df = load_xp(run)
         df = pd.concat([df, run_df])
+    df = df[df["edition"] == args.edition]
     print(df)
 
     plt.style.use("science")
@@ -77,6 +79,7 @@ if __name__ == "__main__":
             linewidth=3,
             markersize=16,
         )
+        ax.set_yscale("log")
         ax.set_xticks(list(strat_df["x"]))
         ax.set_xticklabels(
             [str(hash_len) for hash_len in sorted(set(strat_df["hash_len"]))]
@@ -85,6 +88,7 @@ if __name__ == "__main__":
     ax.legend(ncols=2)
     ax.set_xlabel("Hash length")
     ax.set_ylabel(METRIC_TO_YLABEL[args.metric])
+    ax.set_title(args.edition)
 
     fig = plt.gcf()
     fig.set_size_inches(16, 8)
