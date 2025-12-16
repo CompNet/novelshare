@@ -1,4 +1,4 @@
-import argparse, json, re, os, math
+import argparse, json, re, os, math, ast
 from collections import defaultdict
 import functools as ft
 import pathlib as pl
@@ -139,10 +139,10 @@ if __name__ == "__main__":
     # plot
     os.makedirs(args.output_dir, exist_ok=True)
     cols_nb = 3
-
     plt.style.use("science")
     plt.rcParams.update({"font.size": 16})
-    # one subplot per "noise"
+
+    # # one subplot per "noise"
     # pick "book" to split curves
     for strat in set(df["strat"]):
         noises = list(set(df["noise"]))
@@ -154,7 +154,7 @@ if __name__ == "__main__":
             ax = axs[i // cols_nb][i % cols_nb]
             ax_df = df[(df["strat"] == strat) & (df["noise"] == noise)]
             for j, book in enumerate(set(df["book"])):
-                ax_df[ax_df["book"] == book].plot(  # type: ignore
+                ax_df[ax_df["book"] == book].plot(
                     ax=ax,
                     x="steps",
                     y="values",
@@ -182,7 +182,7 @@ if __name__ == "__main__":
             ax = axs[i // cols_nb][i % cols_nb]
             ax_df = df[(df["book"] == book) & (df["noise"] == noise)]
             for j, strat in enumerate(set(df["strat"])):
-                ax_df[ax_df["strat"] == strat].plot(  # type: ignore
+                ax_df[ax_df["strat"] == strat].plot(
                     ax=ax,
                     x="steps",
                     y="values",
@@ -197,3 +197,35 @@ if __name__ == "__main__":
         out_path = args.output_dir / f"perstrat_{book}.pdf"
         print(f"saving {out_path}")
         plt.savefig(out_path)
+    plt.close("all")
+
+    # pick "strat" to split curves and average over books
+    noises = list(set(df["noise"]))
+    fig, axs = plt.subplots(math.ceil(len(noises) / cols_nb), cols_nb, figsize=(16, 8))
+    df_book_avg = df.copy()
+    # groupby can't handle a mix of floats and tuples
+    df_book_avg["steps"] = df_book_avg["steps"].astype(str)
+    df_book_avg = df_book_avg.groupby(["strat", "noise", "steps"], as_index=False).mean(
+        "values"
+    )
+    df_book_avg["steps"] = df_book_avg["steps"].apply(ast.literal_eval)
+    for i, noise in enumerate(noises):
+        ax = axs[i // cols_nb][i % cols_nb]
+        ax_df = df_book_avg[df_book_avg["noise"] == noise]
+        for j, strat in enumerate(set(ax_df["strat"])):
+            ax_strat_df = ax_df[ax_df["strat"] == strat]
+            ax_strat_df.plot(
+                ax=ax,
+                x="steps",
+                y="values",
+                title=noise,
+                label=strat,
+                marker=MARKERS[j],
+            )
+        ax.set_ylabel(METRIC2PRETTY[args.metric])
+        ax.set_xlabel(info.get(f"{noise}.errors_unit", "steps"))
+        ax.grid()
+    plt.tight_layout()
+    out_path = args.output_dir / f"perstrat_average.pdf"
+    print(f"saving {out_path}")
+    plt.savefig(out_path)
