@@ -6,8 +6,7 @@ import pandas as pd
 import numpy as np
 import scienceplots
 import matplotlib.pyplot as plt
-
-MARKERS = ["X", "p", "*", "D", "^", "v", "1", "o", "s"]
+from novelties_bookshare.experiments.plot_utils import MARKERS, STRAT_COLOR_HINTS
 
 
 @ft.lru_cache
@@ -191,6 +190,7 @@ if __name__ == "__main__":
                     marker=MARKERS[j],
                     markersize=12 - j,
                     alpha=0.75,
+                    c=STRAT_COLOR_HINTS[strat],
                 )
             ax.set_ylabel(METRIC2PRETTY[args.metric])
             ax.set_xlabel(info.get(f"{noise}.errors_unit", "steps"))
@@ -225,6 +225,7 @@ if __name__ == "__main__":
                 marker=MARKERS[j],
                 markersize=12 - j,
                 alpha=0.75,
+                c=STRAT_COLOR_HINTS[strat],
             )
         ax.set_ylabel(METRIC2PRETTY[args.metric])
         ax.set_xlabel(info.get(f"{noise}.errors_unit", "steps"))

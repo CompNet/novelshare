@@ -5,6 +5,7 @@ import pathlib as pl
 import matplotlib.pyplot as plt
 import scienceplots
 import pandas as pd
+from novelties_bookshare.experiments.plot_utils import STRAT_COLOR_HINTS
 
 
 def get_params(metric_key: str) -> tuple[str, dict[str, str]]:
@@ -122,6 +123,8 @@ if __name__ == "__main__":
         type=str,
         help="one of: 'errors_nb', 'duration_s', 'errors_percent', 'entity_errors_nb', 'entity_errors_percent'",
     )
+    parser.add_argument("-l", "--log-scale", action="store_true")
+    parser.add_argument("-a", "--annotate-values", action="store_true")
     parser.add_argument("-o", "--output-file", type=pl.Path, default=None)
     args = parser.parse_args()
 
@@ -146,19 +149,24 @@ if __name__ == "__main__":
         pass
 
     plt.style.use("science")
-    plt.rcParams.update({"font.size": 16})
-    ax = df.plot.bar()
-    for p in ax.patches:
-        ax.annotate(
-            format_bar_height(p.get_height()),
-            (p.get_x() * 1.005, p.get_height() * 1.005),
-            fontsize=12,
-        )
+    plt.rcParams.update({"font.size": 10})
+    ax = df.plot.bar(color=[STRAT_COLOR_HINTS[strat] for strat in df.columns])
+    ax.legend(ncols=3)
+    if args.annotate_values:
+        for p in ax.patches:
+            ax.annotate(
+                format_bar_height(p.get_height()),
+                (p.get_x() * 1.005, p.get_height() * 1.005),
+                fontsize=8,
+            )
     ax.set_xlabel("Edition")
     ax.set_ylabel(METRIC_TO_YLABEL[args.metric])
+    ax.grid()
+    if args.log_scale:
+        ax.set_yscale("log")
 
     fig = plt.gcf()
-    fig.set_size_inches(16, 8)
+    fig.set_size_inches(8, 4)
     if not args.output_file is None:
         plt.savefig(args.output_file)
     else:

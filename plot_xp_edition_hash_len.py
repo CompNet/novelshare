@@ -5,8 +5,7 @@ import matplotlib.pyplot as plt
 import scienceplots
 import pandas as pd
 from plot_xp_edition import get_params, METRIC_TO_YLABEL, XP_PARAMS_KEY
-
-MARKERS = ["X", "p", "*", "D", "^", "v", "o", "s"]
+from novelties_bookshare.experiments.plot_utils import MARKERS
 
 
 def load_xp(path: pl.Path) -> pd.DataFrame:

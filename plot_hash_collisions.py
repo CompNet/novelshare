@@ -18,38 +18,40 @@ if __name__ == "__main__":
         for path in edition_sets.values():
             tokens += load_book(path)
 
-    x = list(range(1, 65))
-    y = []
-    for hash_len in tqdm(x, ascii=True):
+    X = list(range(1, 65))
+    Y = []
+    for hash_len in tqdm(X, ascii=True):
         hash2tokens = defaultdict(set)
         encrypted = encrypt_tokens(tokens, hash_len=hash_len)
         for e, token in zip(encrypted, tokens):
             hash2tokens[e].add(token)
-        y.append(mean(len(v) - 1 for v in hash2tokens.values()))
+        Y.append(mean(len(v) - 1 for v in hash2tokens.values()))
 
-    print(y)
-    assert all(y[i] >= y[i + 1] for i in range(len(y) - 1))
-    y = [value for value in y if value > 0.01]
+    print(Y)
+    assert all(Y[i] >= Y[i + 1] for i in range(len(Y) - 1))
+    Y = [value for value in Y if value > 0.01]
 
     plt.style.use("science")
-    plt.rcParams.update({"font.size": 46})
-    plt.bar([str(i + 1) for i in range(len(y))], y)
+    plt.rcParams.update({"font.size": 10})
+    X = [i + 1 for i in range(len(Y))]
+    plt.plot(X, Y, linewidth=1, marker="*", markersize=8)
     ax = plt.gca()
-    for p in ax.patches:
+    for x, y in zip(X, Y):
         ax.annotate(
-            f"{p.get_height():.2f}",
-            (p.get_x() + p.get_width() / 2, p.get_height()),
+            f"{y:.2f}",
+            (x, y + 24),
             ha="center",
             va="bottom",
-            fontsize=42,
+            fontsize=8,
         )
-    ax.set_ylim((0, max(y) + 256))
-    plt.ylabel("Mean collisions per token", fontsize=36)
+    ax.grid()
+    ax.set_ylim((0, max(Y) + 256))
+    plt.ylabel("Mean collisions per token", fontsize=10)
     plt.xlabel("Hash length")
     plt.tight_layout()
 
     fig = plt.gcf()
-    fig.set_size_inches(16, 8)
+    fig.set_size_inches(4, 2)
     if not args.output_file is None:
         plt.savefig(args.output_file)
     else:
