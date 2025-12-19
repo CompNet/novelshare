@@ -43,13 +43,13 @@ if __name__ == "__main__":
         type=pl.Path,
         help="A list of runs to plot. They must be of same nature (i.e. obtained with the same experiment script).",
     )
-    parser.add_argument("-e", "--edition", type=str, help="selected edition")
     parser.add_argument(
         "-m",
         "--metric",
         type=str,
         help="one of: 'errors_nb', 'duration_s', 'errors_percent', 'entity_errors_nb', 'entity_errors_percent'",
     )
+    parser.add_argument("-l", "--log", action="store_true")
     parser.add_argument("-o", "--output-file", type=pl.Path, default=None)
     args = parser.parse_args()
 
@@ -58,14 +58,14 @@ if __name__ == "__main__":
     for run in args.runs[1:]:
         run_df = load_xp(run)
         df = pd.concat([df, run_df])
-    df = df[df["edition"] == args.edition]
     print(df)
 
     plt.style.use("science")
-    plt.rcParams.update({"font.size": 48})
+    plt.rcParams.update({"font.size": 10})
     fig, ax = plt.subplots()
     for i, strat in enumerate(set(df["strategy"])):
         strat_df = df[df["strategy"] == strat]
+        strat_df = strat_df.groupby("hash_len", as_index=False)[args.metric].mean()
         strat_df.loc[:, "x"] = [
             i + 1 for i, _ in enumerate(sorted(set(strat_df["hash_len"])))
         ]
@@ -75,10 +75,12 @@ if __name__ == "__main__":
             y=args.metric,
             label=strat,
             marker=MARKERS[i],
-            linewidth=3,
-            markersize=16,
+            linewidth=1,
+            markersize=4,
+            alpha=0.75,
         )
-        ax.set_yscale("log")
+        if args.log:
+            ax.set_yscale("log")
         ax.set_xticks(list(strat_df["x"]))
         ax.set_xticklabels(
             [str(hash_len) for hash_len in sorted(set(strat_df["hash_len"]))]
@@ -87,10 +89,9 @@ if __name__ == "__main__":
     ax.legend(ncols=2)
     ax.set_xlabel("Hash length")
     ax.set_ylabel(METRIC_TO_YLABEL[args.metric])
-    ax.set_title(args.edition)
 
     fig = plt.gcf()
-    fig.set_size_inches(16, 8)
+    fig.set_size_inches(4, 2)
     if not args.output_file is None:
         plt.savefig(args.output_file)
     else:
