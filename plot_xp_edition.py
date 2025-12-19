@@ -154,7 +154,13 @@ if __name__ == "__main__":
 
     plt.style.use("science")
     plt.rcParams.update({"font.size": 10})
-    ax = df.plot.bar(color=[STRAT_COLOR_HINTS[strat] for strat in df.columns])
+    # when columns are strategies, we use STRAT_COLOR_HINTS to provide
+    # the correct color for each bar. Otherwise, we simply use the
+    # default.
+    if all(col in STRAT_COLOR_HINTS for col in df.columns):
+        ax = df.plot.bar(color=[STRAT_COLOR_HINTS[strat] for strat in df.columns])
+    else:
+        ax = df.plot.bar()
     ax.legend(ncols=3)
     if args.annotate_values:
         for p in ax.patches:
