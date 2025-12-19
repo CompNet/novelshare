@@ -49,7 +49,7 @@ if __name__ == "__main__":
         type=str,
         help="one of: 'errors_nb', 'duration_s', 'errors_percent', 'entity_errors_nb', 'entity_errors_percent'",
     )
-    parser.add_argument("-l", "--log", action="store_true")
+    parser.add_argument("-l", "--log-scale", action="store_true")
     parser.add_argument("-o", "--output-file", type=pl.Path, default=None)
     args = parser.parse_args()
 
@@ -79,7 +79,7 @@ if __name__ == "__main__":
             markersize=4,
             alpha=0.75,
         )
-        if args.log:
+        if args.log_scale:
             ax.set_yscale("log")
         ax.set_xticks(list(strat_df["x"]))
         ax.set_xticklabels(
