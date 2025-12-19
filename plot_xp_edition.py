@@ -125,6 +125,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("-l", "--log-scale", action="store_true")
     parser.add_argument("-a", "--annotate-values", action="store_true")
+    parser.add_argument("-e", "--exclude-strategies", nargs="*", type=str, default=None)
     parser.add_argument("-o", "--output-file", type=pl.Path, default=None)
     args = parser.parse_args()
 
@@ -133,6 +134,9 @@ if __name__ == "__main__":
     for run in args.runs[1:]:
         run_xp_name, run_df = load_xp(run)
         df = pd.concat([df, run_df])
+    if args.exclude_strategies:
+        for excluded_strat in args.exclude_strategies:
+            df = df[df["strategy"] != excluded_strat]
     print(f"{xp_name=}")
     print(df)
 
