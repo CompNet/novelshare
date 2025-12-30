@@ -67,11 +67,15 @@ METRIC_TO_YLABEL = {
     "errors_percent": "Percentage of errors",
     "entity_errors_nb": "Number of entity errors",
     "entity_errors_percent": "Percentage of entity errors",
+    "entity_errors_percent_lenient": "Percentage of entity errors",
+    "entity_errors_percent_strict": "Percentage of entity errors",
 }
 
 METRIC_TO_YFORMATTER = {
     "errors_percent": mtick.PercentFormatter(1.0),
     "entity_errors_percent": mtick.PercentFormatter(1.0),
+    "entity_errors_percent_lenient": mtick.PercentFormatter(1.0),
+    "entity_errors_percent_strict": mtick.PercentFormatter(1.0),
 }
 
 XP_PARAMS_KEY = {
@@ -129,7 +133,7 @@ if __name__ == "__main__":
         "-m",
         "--metric",
         type=str,
-        help="one of: 'errors_nb', 'duration_s', 'errors_percent', 'entity_errors_nb', 'entity_errors_percent'",
+        help="one of: 'errors_nb', 'duration_s', 'errors_percent', 'entity_errors_nb', 'entity_errors_percent_lenient', 'entity_errors_percent_strict'",
     )
     parser.add_argument("-l", "--log-scale", action="store_true")
     parser.add_argument("-a", "--annotate-values", action="store_true")
