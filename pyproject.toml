@@ -3,7 +3,7 @@ name = "novelties-bookshare"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.9,<3.14"
 dependencies = [
     "transformers>=4.51.3",
     "torch>=2.7.0",
