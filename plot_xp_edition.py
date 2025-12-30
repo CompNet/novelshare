@@ -3,6 +3,7 @@ import re, argparse, json
 from collections import defaultdict
 import pathlib as pl
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mtick
 import scienceplots
 import pandas as pd
 from novelties_bookshare.experiments.plot_utils import STRAT_COLOR_HINTS
@@ -67,6 +68,8 @@ METRIC_TO_YLABEL = {
     "entity_errors_nb": "Number of entity errors",
     "entity_errors_percent": "Percentage of entity errors",
 }
+
+METRIC_TO_YFORMATTER = {"errors_percent": mtick.PercentFormatter(1.0)}
 
 XP_PARAMS_KEY = {
     "xp_edition": ["strategy", "edition"],
@@ -171,6 +174,8 @@ if __name__ == "__main__":
             )
     ax.set_xlabel("Edition")
     ax.set_ylabel(METRIC_TO_YLABEL[args.metric])
+    if args.metric in METRIC_TO_YFORMATTER:
+        ax.yaxis.set_major_formatter(METRIC_TO_YFORMATTER[args.metric])
     ax.grid()
     if args.log_scale:
         ax.set_yscale("log")

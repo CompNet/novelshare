@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 import scienceplots
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mtick
 from novelties_bookshare.experiments.plot_utils import MARKERS, STRAT_COLOR_HINTS
 
 
@@ -80,6 +81,8 @@ METRIC2PRETTY = {
     "entity_errors_nb": "Number of entity errors",
     "entity_errors_percent": "Percentage of entity errors",
 }
+
+METRIC_TO_YFORMATTER = {"errors_percent": mtick.PercentFormatter(1.0)}
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -162,6 +165,8 @@ if __name__ == "__main__":
                     marker=MARKERS[j],
                 )
             ax.set_ylabel(METRIC2PRETTY[args.metric])
+            if args.metric in METRIC_TO_YFORMATTER:
+                ax.yaxis.set_major_formatter(METRIC_TO_YFORMATTER[args.metric])
             ax.set_xlabel(info.get(f"{noise}.errors_unit", "steps"))
             ax.grid()
         plt.tight_layout()
@@ -193,6 +198,8 @@ if __name__ == "__main__":
                     c=STRAT_COLOR_HINTS[strat],
                 )
             ax.set_ylabel(METRIC2PRETTY[args.metric])
+            if args.metric in METRIC_TO_YFORMATTER:
+                ax.yaxis.set_major_formatter(METRIC_TO_YFORMATTER[args.metric])
             ax.set_xlabel(info.get(f"{noise}.errors_unit", "steps"))
             ax.grid()
         plt.tight_layout()
@@ -228,6 +235,8 @@ if __name__ == "__main__":
                 c=STRAT_COLOR_HINTS[strat],
             )
         ax.set_ylabel(METRIC2PRETTY[args.metric])
+        if args.metric in METRIC_TO_YFORMATTER:
+            ax.yaxis.set_major_formatter(METRIC_TO_YFORMATTER[args.metric])
         ax.set_xlabel(info.get(f"{noise}.errors_unit", "steps"))
         ax.grid()
     plt.tight_layout()
