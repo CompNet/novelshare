@@ -130,7 +130,7 @@ def main(
         t1 = time.process_time()
 
         reference_tokens = list(flatten(reference_chapters))
-        setup_name = f"s={strat}.e=Moby_Dick,MB-1851-US"
+        setup_name = f"s={strat}.e=Moby_Dick,MB-1988"
         record_decryption_metrics_(
             _run,
             setup_name,
