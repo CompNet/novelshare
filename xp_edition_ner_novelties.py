@@ -78,7 +78,7 @@ def main(
     reference_tags = [chapter_tags for _, chapter_tags in reference_chapters_and_tags]
 
     user_chapters = list(
-        iter_book_chapters("./data/Moby_Dick/MB-1851-US", chapter_limit=chapter_limit)
+        iter_book_chapters("./data/Moby_Dick/MB-1988", chapter_limit=chapter_limit)
     )
 
     normalize_(reference_chapters)
