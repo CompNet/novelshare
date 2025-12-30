@@ -233,7 +233,7 @@ def plugin_case(
                     casing(user_token), hash_len=hash_len
                 )
                 if encrypted_user_token == encrypted_token:
-                    decrypted_tokens[i1 + k] = user_token
+                    decrypted_tokens[i1 + k] = casing(user_token)
 
     return decrypted_tokens
 
