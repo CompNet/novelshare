@@ -67,3 +67,5 @@ for novel in ${NOVELS[@]}; do
             device=cuda
     done
 done
+
+python xp_ner_novelties.py --id="xp_edition_ner_novelties" with hash_len=2 device=cuda

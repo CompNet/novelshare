@@ -69,10 +69,14 @@ METRIC_TO_YLABEL = {
     "entity_errors_percent": "Percentage of entity errors",
 }
 
-METRIC_TO_YFORMATTER = {"errors_percent": mtick.PercentFormatter(1.0)}
+METRIC_TO_YFORMATTER = {
+    "errors_percent": mtick.PercentFormatter(1.0),
+    "entity_errors_percent": mtick.PercentFormatter(1.0),
+}
 
 XP_PARAMS_KEY = {
     "xp_edition": ["strategy", "edition"],
+    "xp_edition_ner_novelties": ["strategy", "edition"],
     "xp_edition_mlm_params": ["window", "edition"],
     "xp_edition_split_params": ["max_token_len", "max_split_nb", "edition"],
     "xp_edition_propagate_order": ["pipeline", "edition"],
@@ -80,6 +84,7 @@ XP_PARAMS_KEY = {
 
 XP_GET_PARAMS_FN = {
     "xp_edition": get_params,
+    "xp_edition_ner_novelties": get_params,
     "xp_edition_mlm_params": get_params_mlm,
     "xp_edition_split_params": get_params_split,
     "xp_edition_propagate_order": get_params_propagate,
@@ -131,6 +136,7 @@ if __name__ == "__main__":
     parser.add_argument("-e", "--exclude-strategies", nargs="*", type=str, default=None)
     parser.add_argument("-o", "--output-file", type=pl.Path, default=None)
     args = parser.parse_args()
+    assert args.metric
 
     assert len(args.runs) > 0
     xp_name, df = load_xp(args.runs[0])

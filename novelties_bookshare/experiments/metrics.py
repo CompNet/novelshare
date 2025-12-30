@@ -62,6 +62,7 @@ def record_decryption_metrics_(
     ref_tokens: list[str],
     pred_tokens: list[str],
     duration_s: float,
+    ref_tags: list[str] | None = None,
 ):
     _run.log_scalar(
         f"{setup_name}.errors_nb",
@@ -76,15 +77,14 @@ def record_decryption_metrics_(
         errors_percent(ref_tokens, pred_tokens),
     )
 
-    # TODO: these metrics should be added back when implementing
-    # general annotations
-    # _run.log_scalar(
-    #     f"{setup_name}.entity_errors_nb",
-    #     entity_errors_nb(ref_tokens, pred_tokens, ref_tags),
-    # )
-    # _run.log_scalar(
-    #     f"{setup_name}.entity_errors_percent",
-    #     entity_errors_percent(ref_tokens, pred_tokens, ref_tags),
-    # )
+    if not ref_tags is None:
+        _run.log_scalar(
+            f"{setup_name}.entity_errors_nb",
+            entity_errors_nb(ref_tokens, pred_tokens, ref_tags),
+        )
+        _run.log_scalar(
+            f"{setup_name}.entity_errors_percent",
+            entity_errors_percent(ref_tokens, pred_tokens, ref_tags),
+        )
 
     _run.log_scalar(f"{setup_name}.duration_s", duration_s)
