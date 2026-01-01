@@ -6,7 +6,10 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 import scienceplots
 import pandas as pd
-from novelties_bookshare.experiments.plot_utils import STRAT_COLOR_HINTS
+from novelties_bookshare.experiments.plot_utils import (
+    STRAT_COLOR_HINTS,
+    EDITION_COLOR_HINTS,
+)
 
 
 def get_params(metric_key: str) -> tuple[str, dict[str, str]]:
@@ -174,6 +177,10 @@ if __name__ == "__main__":
         ax = df.plot.bar(color=[STRAT_COLOR_HINTS[strat] for strat in df.columns])
     else:
         ax = df.plot.bar()
+    # apply EDITION_COLOR_HINTS
+    for label in ax.get_xticklabels():
+        if label.get_text() in EDITION_COLOR_HINTS:
+            label.set_color(EDITION_COLOR_HINTS[label.get_text()])
     ax.legend(ncols=3)
     if args.annotate_values:
         for p in ax.patches:
@@ -183,7 +190,9 @@ if __name__ == "__main__":
                 fontsize=8,
             )
     ax.set_xlabel("Edition")
-    ax.set_ylabel(METRIC_TO_YLABEL[args.metric])
+    ax.set_ylabel(
+        METRIC_TO_YLABEL[args.metric] + "(log scale)" if args.log_scale else ""
+    )
     if args.metric in METRIC_TO_YFORMATTER:
         ax.yaxis.set_major_formatter(METRIC_TO_YFORMATTER[args.metric])
     ax.grid()

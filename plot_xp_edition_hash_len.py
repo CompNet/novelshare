@@ -2,10 +2,18 @@ import argparse, json
 from collections import defaultdict
 import pathlib as pl
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mtick
 import scienceplots
 import pandas as pd
 from plot_xp_edition import get_params, METRIC_TO_YLABEL, XP_PARAMS_KEY
 from novelties_bookshare.experiments.plot_utils import MARKERS
+
+METRIC_TO_YFORMATTER = {
+    "errors_percent": mtick.PercentFormatter(1.0),
+    "entity_errors_percent": mtick.PercentFormatter(1.0),
+    "entity_errors_percent_lenient": mtick.PercentFormatter(1.0),
+    "entity_errors_percent_strict": mtick.PercentFormatter(1.0),
+}
 
 
 def load_xp(path: pl.Path) -> pd.DataFrame:
@@ -81,6 +89,8 @@ if __name__ == "__main__":
         )
         if args.log_scale:
             ax.set_yscale("log")
+        if args.metric in METRIC_TO_YFORMATTER:
+            ax.yaxis.set_major_formatter(METRIC_TO_YFORMATTER[args.metric])
         ax.set_xticks(list(strat_df["x"]))
         ax.set_xticklabels(
             [str(hash_len) for hash_len in sorted(set(strat_df["hash_len"]))]
@@ -88,11 +98,11 @@ if __name__ == "__main__":
     ax.grid()
     ax.legend(ncols=2)
     ax.set_xlabel("Hash length")
-    ax.set_ylabel(METRIC_TO_YLABEL[args.metric])
+    ax.set_ylabel(METRIC_TO_YLABEL[args.metric] + " (log)" if args.log_scale else "")
 
     fig = plt.gcf()
     fig.set_size_inches(4, 2)
     if not args.output_file is None:
-        plt.savefig(args.output_file)
+        plt.savefig(args.output_file, bbox_inches="tight")
     else:
         plt.show()

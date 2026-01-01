@@ -20,3 +20,12 @@ STRAT_COLOR_HINTS = {
     "propagate": "#845B97",
     "pipe": "#474747",
 }
+
+EDITION_COLOR_HINTS = {
+    "MB-1851-UK": "#FF2C00",
+    "MB-1988": "#00B945",
+    "F-1823": "#00B945",
+    "F-1831": "#FF2C00",
+    "PP-1817": "#00B945",
+    "PP-1894": "#FF2C00",
+}
