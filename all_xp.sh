@@ -21,6 +21,13 @@ for novel in ${NOVELS[@]}; do
            max_token_len_range='[8, 16, 32]'\
            max_splits_nb_range='[8, 16, 32]'
 
+    python xp_edition_propagate_order.py\
+           --id="xp_edition_propagate_order_n=${novel}_h=2"\
+           with\
+           novel="$novel"\
+           hash_len=2\
+           device=cuda
+
 done
 
 # synthetic errors
