@@ -1,6 +1,47 @@
 # novelties-bookshare
 
 
+# Installation
+
+## uv
+
+Clone the repository and use `uv`:
+
+```sh
+uv sync
+```
+
+we have several extras. For development dependencies:
+
+```sh
+uv sync --dev
+```
+
+For GPU acceleration, depending on your GPU, you can use:
+
+```sh
+uv sync --extra transformers-cuda
+# or
+uv sync --extra transformers-rocm
+```
+
+To not only use the library, but also add additional dependencies to reproduce experiments, you can use the `experiments` extra:
+
+```sh
+uv sync --extra experiments
+```
+
+
+## guix
+
+We provide a more reproducible environment using `guix`:
+
+```sh
+guix time-machine -C channels.scm -- shell -C -m manifest.scm
+```
+
+
+
 # Library user guide
 
 ## Encrypting your corpus
