@@ -9,23 +9,25 @@ dependencies = [
     "torch>=2.7.0",
     "more-itertools>=10.7.0",
     "nltk>=3.9.1",
-    "scienceplots>=2.1.1",
     "scrambledtext",
     "setuptools>=80.0.1",
 ]
 
 [project.optional-dependencies]
-transformers-cuda = [
-    "transformers>=4.51.3",
+cu128 = [
     "torch>=2.7.0"
 ]
-transformers-rocm = [
-    "transformers>=4.51.3",
+rocm63 = [
     "torch>=2.7.0",
     "pytorch-triton-rocm>=3.1.0",
 ]
+cpu = [
+    "torch>=2.7.0"
+]
 experiments = [
     "matplotlib>=3.9.4",
+    "scienceplots>=2.1.1",
+    "brokenaxes>=0.6.2",
     "sacred>=0.8.7",
     "joblib>=1.4.2",
     "pandas>=2.3.0"
@@ -34,8 +36,9 @@ experiments = [
 [tool.uv]
 conflicts = [
   [
-    { extra = "transformers-cuda" },
-    { extra = "transformers-rocm" },
+    { extra = "cu128" },
+    { extra = "rocm63" },
+    { extra = "cpu" },
   ],
 ]
 
@@ -48,14 +51,19 @@ dev = [
 [tool.uv.sources]
 scrambledtext = { git = "https://github.com/Aethor/scrambledtext" }
 torch = [
-  { index = "pytorch-cu128", extra = "transformers-cuda" },
-  { index = "pytorch-rocm63", extra = "transformers-rocm" },
+  { index = "pytorch-cu128", extra = "cu128" },
+  { index = "pytorch-rocm63", extra = "rocm63" },
+  { index = "pytorch-cpu", extra = "cpu" },
 ]
 pytorch-triton-rocm = [
-  { index = "pytorch-rocm63", extra = "transformers-rocm" }
+  { index = "pytorch-rocm63", extra = "rocm63" }
 ]
 
 
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
 
 [[tool.uv.index]]
 name = "pytorch-cu128"

@@ -11,7 +11,7 @@ Clone the repository and use `uv`:
 uv sync
 ```
 
-we have several extras. For development dependencies:
+By default this install everything for and the cuda version of PyTorch. We have several extras to configure your installation. For development dependencies:
 
 ```sh
 uv sync --dev
@@ -20,10 +20,13 @@ uv sync --dev
 For GPU acceleration, depending on your GPU, you can use:
 
 ```sh
-uv sync --extra transformers-cuda
-# or
-uv sync --extra transformers-rocm
+# if you have a cuda 12.8 compatible GPU
+uv sync --extra cu128
+# if you have a rocm 6.3 compatible GPU
+uv sync --extra rocm63
 ```
+
+The `cpu` extra also exists for the cpu version of torch.
 
 To not only use the library, but also add additional dependencies to reproduce experiments, you can use the `experiments` extra:
 
