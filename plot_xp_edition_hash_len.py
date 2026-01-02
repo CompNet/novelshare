@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 import scienceplots
 import pandas as pd
+from more_itertools import windowed
 from plot_xp_edition import get_params, METRIC_TO_YLABEL, XP_PARAMS_KEY
 from novelties_bookshare.experiments.plot_utils import MARKERS
 
@@ -74,9 +75,8 @@ if __name__ == "__main__":
     for i, strat in enumerate(set(df["strategy"])):
         strat_df = df[df["strategy"] == strat]
         strat_df = strat_df.groupby("hash_len", as_index=False)[args.metric].mean()
-        strat_df.loc[:, "x"] = [
-            i + 1 for i, _ in enumerate(sorted(set(strat_df["hash_len"])))
-        ]
+        hash_len_lst = sorted(set(strat_df["hash_len"]))
+        strat_df.loc[:, "x"] = [i + 1 for i, _ in enumerate(hash_len_lst)]
         strat_df.plot(
             ax=ax,
             x="x",
@@ -92,9 +92,18 @@ if __name__ == "__main__":
         if args.metric in METRIC_TO_YFORMATTER:
             ax.yaxis.set_major_formatter(METRIC_TO_YFORMATTER[args.metric])
         ax.set_xticks(list(strat_df["x"]))
-        ax.set_xticklabels(
-            [str(hash_len) for hash_len in sorted(set(strat_df["hash_len"]))]
-        )
+        ax.set_xticklabels([str(hash_len) for hash_len in hash_len_lst])
+        # add ... for discontinuous regions
+        minor_ticks = []
+        for i, (hl1, hl2) in enumerate(windowed(hash_len_lst, 2)):
+            if hl2 != hl1 + 1:  # type: ignore
+                x1 = strat_df.x.loc[i]
+                x2 = strat_df.x.loc[i + 1]
+                minor_ticks.append(x1 + (x2 - x1) / 2)
+        ax.xaxis.set_minor_locator(mtick.FixedLocator(minor_ticks))
+        ax.xaxis.set_minor_formatter(mtick.FixedFormatter(["..." for _ in minor_ticks]))
+        ax.tick_params(which="minor", length=0)
+
     ax.grid()
     ax.legend(ncols=2)
     ax.set_xlabel("Hash length")
