@@ -11,6 +11,7 @@ from novelties_bookshare.experiments.data import load_book, EDITION_SETS
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-o", "--output-file", type=pl.Path, default=None)
+    parser.add_argument("-l", "--log-scale", action="store_true")
     args = parser.parse_args()
 
     tokens = []
@@ -36,17 +37,23 @@ if __name__ == "__main__":
     X = [i + 1 for i in range(len(Y))]
     plt.plot(X, Y, linewidth=1, marker="*", markersize=8)
     ax = plt.gca()
+    if args.log_scale:
+        ax.set_yscale("log")
     for x, y in zip(X, Y):
         ax.annotate(
             f"{y:.2f}",
-            (x, y + 24),
+            (x, y),
+            xytext=(0, 5),
+            textcoords="offset points",
             ha="center",
             va="bottom",
             fontsize=8,
         )
     ax.grid()
-    ax.set_ylim((0, max(Y) + 256))
-    plt.ylabel("Mean collisions per token", fontsize=10)
+    plt.ylabel(
+        "Mean collisions per token" + "\n(log scale)" if args.log_scale else "",
+        fontsize=10,
+    )
     plt.xlabel("Hash length")
     plt.tight_layout()
 
