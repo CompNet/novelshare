@@ -110,6 +110,13 @@ if __name__ == "__main__":
         type=str,
         help="one of: 'errors_nb', 'duration_s', 'errors_percent', 'entity_errors_nb', 'entity_errors_percent'",
     )
+    parser.add_argument(
+        "-x",
+        "--xwindow",
+        type=str,
+        help="A tuple (min, max) to limit x display. min and max are inclusive. Only works when steps are numeric values.",
+        default=None,
+    )
     parser.add_argument("-o", "--output-dir", type=pl.Path)
     args = parser.parse_args()
 
@@ -145,6 +152,16 @@ if __name__ == "__main__":
             df_dict["values"].append(value)
     df = pd.DataFrame(df_dict)
     print(df)
+
+    if args.xwindow:
+        xwindow = ast.literal_eval(args.xwindow)
+        step_types = df.steps.map(type)
+        df_numstep = df[step_types == float]
+        df_numstep = df_numstep[
+            (df_numstep.steps >= xwindow[0]) & (df_numstep.steps <= xwindow[1])
+        ]
+        df_nonnumstep = df[step_types != float]
+        df = pd.concat([df_numstep, df_nonnumstep])
 
     # plot
     os.makedirs(args.output_dir, exist_ok=True)
