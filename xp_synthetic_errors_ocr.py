@@ -75,7 +75,7 @@ def main(
 
     corpus = [
         pl.Path("./data/Frankenstein/F-1818/"),
-        pl.Path("./data/Moby_Dick/MB-1851-US/"),
+        pl.Path("./data/Moby_Dick/MD-1851-US/"),
         pl.Path("./data/Pride_and_Prejudice/PP-1813/"),
     ]
 

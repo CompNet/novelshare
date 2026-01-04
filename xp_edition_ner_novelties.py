@@ -71,14 +71,14 @@ def main(
 
     reference_chapters_and_tags = list(
         iter_book_chapters_and_tags(
-            "./data/Moby_Dick/MB-Novelties", chapter_limit=chapter_limit
+            "./data/Moby_Dick/MD-Novelties", chapter_limit=chapter_limit
         ),
     )
     reference_chapters = [chapter for chapter, _ in reference_chapters_and_tags]
     reference_tags = [chapter_tags for _, chapter_tags in reference_chapters_and_tags]
 
     user_chapters = list(
-        iter_book_chapters("./data/Moby_Dick/MB-1988", chapter_limit=chapter_limit)
+        iter_book_chapters("./data/Moby_Dick/MD-1988", chapter_limit=chapter_limit)
     )
 
     normalize_(reference_chapters)
@@ -130,7 +130,7 @@ def main(
         t1 = time.process_time()
 
         reference_tokens = list(flatten(reference_chapters))
-        setup_name = f"s={strat}.e=Moby_Dick,MB-1988"
+        setup_name = f"s={strat}.e=Moby_Dick,MD-1988"
         record_decryption_metrics_(
             _run,
             setup_name,
