@@ -74,6 +74,14 @@ def get_steps(noise: str, config: dict) -> list:
         raise ValueError(noise)
 
 
+def format_ocr_xtick(xtick: str) -> str:
+    try:
+        xtick_tuple = ast.literal_eval(xtick)
+    except SyntaxError:
+        return xtick
+    return f"({xtick_tuple[0]},{xtick_tuple[1]})"
+
+
 METRIC2PRETTY = {
     "errors_nb": "Number of errors",
     "duration_s": "Duration (s)",
@@ -161,7 +169,7 @@ if __name__ == "__main__":
                     x="steps",
                     y="values",
                     title=noise,
-                    label=book,
+                    label="\\texttt{{{0}}}".format(book),
                     marker=MARKERS[j],
                 )
             ax.set_ylabel(METRIC2PRETTY[args.metric])
@@ -169,6 +177,11 @@ if __name__ == "__main__":
                 ax.yaxis.set_major_formatter(METRIC_TO_YFORMATTER[args.metric])
             ax.set_xlabel(info.get(f"{noise}.errors_unit", "steps"))
             ax.grid()
+            if noise == "ocr_scramble":
+                xticks = ax.get_xticklabels()
+                ax.set_xticklabels(
+                    [format_ocr_xtick(xtick.get_text()) for xtick in xticks]
+                )
         plt.tight_layout()
         out_path = args.output_dir / f"perbook_{strat}.pdf"
         print(f"saving {out_path}")
@@ -190,8 +203,8 @@ if __name__ == "__main__":
                     ax=ax,
                     x="steps",
                     y="values",
-                    title=noise,
-                    label=strat,
+                    title="\\texttt{{{0}}}".format(noise),
+                    label="\\texttt{{{0}}}".format(strat),
                     marker=MARKERS[j],
                     markersize=12 - j,
                     alpha=0.75,
@@ -202,6 +215,11 @@ if __name__ == "__main__":
                 ax.yaxis.set_major_formatter(METRIC_TO_YFORMATTER[args.metric])
             ax.set_xlabel(info.get(f"{noise}.errors_unit", "steps"))
             ax.grid()
+            if noise == "ocr_scramble":
+                xticks = ax.get_xticklabels()
+                ax.set_xticklabels(
+                    [format_ocr_xtick(xtick.get_text()) for xtick in xticks]
+                )
         plt.tight_layout()
         out_path = args.output_dir / f"perstrat_{book}.pdf"
         print(f"saving {out_path}")
@@ -227,8 +245,8 @@ if __name__ == "__main__":
                 ax=ax,
                 x="steps",
                 y="values",
-                title=noise,
-                label=strat,
+                title="\\texttt{{{0}}}".format(noise),
+                label="\\texttt{{{0}}}".format(strat),
                 marker=MARKERS[j],
                 markersize=12 - j,
                 alpha=0.75,
@@ -239,6 +257,9 @@ if __name__ == "__main__":
             ax.yaxis.set_major_formatter(METRIC_TO_YFORMATTER[args.metric])
         ax.set_xlabel(info.get(f"{noise}.errors_unit", "steps"))
         ax.grid()
+        if noise == "ocr_scramble":
+            xticks = ax.get_xticklabels()
+            ax.set_xticklabels([format_ocr_xtick(xtick.get_text()) for xtick in xticks])
     plt.tight_layout()
     out_path = args.output_dir / f"perstrat_average.pdf"
     print(f"saving {out_path}")

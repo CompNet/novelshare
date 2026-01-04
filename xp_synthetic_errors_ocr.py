@@ -124,7 +124,7 @@ def main(
         ),
     ]
 
-    _run.info[f"ocr_scramble.errors_unit"] = "(WER, CER)"
+    _run.info[f"ocr_scramble.errors_unit"] = "(WER,CER)"
 
     def decrypt_setup_test(
         job_i: int,
