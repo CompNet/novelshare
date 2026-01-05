@@ -45,7 +45,7 @@ python xp_synthetic_errors_ocr.py\
         --id="xp_synthetic_errors_ocr_h=2"\
         with\
         hash_len=2\
-        wer_grid='[0.0, 0.05, 0.1, 0.15, 0.2]'\
+        wer_grid='[0.0, 0.6, 0.6, 0.6, 0.6]'\
         cer_grid='[0.0, 0.05, 0.1, 0.15, 0.2]'\
         jobs_nb=2\
         device=cuda
