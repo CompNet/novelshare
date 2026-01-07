@@ -43,6 +43,32 @@ We provide a more reproducible environment using `guix`:
 guix time-machine -C channels.scm -- shell -C -m manifest.scm
 ```
 
+Note: the package `python-scienceplots` is not packaged yet in Guix and should therefore be installed manually (`pip install scienceplots`).
+
+
+# Reproducing Experiments
+
+After installation, activate your Python environment and start the experiments script:
+
+```sh
+source .venv/bin/activate
+./all_xp.sh
+```
+
+This will create directories in the `runs` folder. You can then use the plotting scripts to reproduce the figures from the paper:
+
+| Figure    | Command                                                                                                                                                                                                            |
+|-----------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Figure 4  | `python plot_hash_collisions.py -l`                                                                                                                                                                                |
+| Figure 5  | `python plot_xp_edition_hash_len.py -r ./runs/xp_edition_n=Frankenstein_h=* ./runs/xp_edition_n=Moby_Dick_h=* ./runs/xp_edition_n=Pride_and_Prejudice_h=* -m errors_percent -l`                                    |
+| Figure 6  | `python plot_xp_edition.py -r ./runs/xp_edition_n=Frankenstein_h=2 ./runs/xp_edition_n=Moby_Dick_h=2 ./runs/xp_edition_n=Pride_and_Prejudice_h=2 -m errors_percent`                                                |
+| Figure 7  | `python plot_xp_synthetic_errors.py -m errors_percent -r ./runs/xp_synthetic_errors_h=2/ -c ./runs/xp_synthetic_errors_ocr_h=2/ -x '(0.0,0.1)' -o ./plots`                                                         |
+| Figure 8  | `python plot_xp_edition.py -r ./runs/xp_edition_n=Frankenstein_h=2 ./runs/xp_edition_n=Moby_Dick_h=2 ./runs/xp_edition_n=Pride_and_Prejudice_h=2 -m duration_s -l`                                                 |
+| Figure 9  | `python plot_xp_edition.py -r ./runs/xp_edition_mlm_params_n=Frankenstein_h=2 ./runs/xp_edition_mlm_params_n=Moby_Dick_h=2 ./runs/xp_edition_mlm_params_n=Pride_and_Prejudice_h=2 -m duration_s -l`                |
+| Figure 10 | `python plot_xp_edition.py -r ./runs/xp_edition_propagate_order_n=Frankenstein_h=2 ./runs/xp_edition_propagate_order_n=Moby_Dick_h=2 ./runs/xp_edition_propagate_order_n=Pride_and_Prejudice_h=2 -m duration_s -l` |
+
+For all scripts, you can use `--help` for more details.
+
 
 
 # Library user guide
