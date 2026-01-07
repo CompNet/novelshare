@@ -51,7 +51,7 @@ if __name__ == "__main__":
         )
     ax.grid()
     plt.ylabel(
-        "Mean collisions per token" + "\n(log scale)" if args.log_scale else "",
+        "Mean coll. per token" + " (log)" if args.log_scale else "",
         fontsize=10,
     )
     plt.xlabel("Hash length")

@@ -5,7 +5,7 @@ from novelties_bookshare.decrypt import (
     make_plugin_case,
     make_plugin_mlm,
     make_plugin_propagate,
-    make_plugin_split,
+    make_plugin_retokenize,
 )
 from novelties_bookshare.experiments.metrics import errors_nb
 from tests.strategies import error_seq_pairs
@@ -29,24 +29,24 @@ def test_substitution_propagate():
     assert pred_tokens == ref_tokens
 
 
-def test_tokensplit_split():
+def test_tokensplit_retokenize():
     ref_tokens = "A B CD E".split()
     user_tokens = "A B C D E".split()
     pred_tokens = decrypt_tokens(
         encrypt_tokens(ref_tokens),
         user_tokens,
-        decryption_plugins=[make_plugin_split(8, 8)],
+        decryption_plugins=[make_plugin_retokenize(8, 8)],
     )
     assert pred_tokens == ref_tokens
 
 
-def test_tokenmerge_split():
+def test_tokenmerge_retokenize():
     ref_tokens = "A B C D E".split()
     user_tokens = "A B CD E".split()
     pred_tokens = decrypt_tokens(
         encrypt_tokens(ref_tokens),
         user_tokens,
-        decryption_plugins=[make_plugin_split(8, 8)],
+        decryption_plugins=[make_plugin_retokenize(8, 8)],
     )
     assert pred_tokens == ref_tokens
 
@@ -94,7 +94,7 @@ def test_propagate_cant_degrade(error_pair: tuple[list[str], list[str]], hash_le
 
 
 @given(error_seq_pairs(), st.integers(min_value=1, max_value=64))
-def test_split_cant_degrade(error_pair: tuple[list[str], list[str]], hash_len):
+def test_retokenize_cant_degrade(error_pair: tuple[list[str], list[str]], hash_len):
     tokens, error_tokens = error_pair
     encrypted = encrypt_tokens(tokens, hash_len=hash_len)
     decrypted = decrypt_tokens(encrypted, error_tokens, hash_len=hash_len)
@@ -102,7 +102,7 @@ def test_split_cant_degrade(error_pair: tuple[list[str], list[str]], hash_len):
         encrypted,
         error_tokens,
         hash_len=hash_len,
-        decryption_plugins=[make_plugin_split(max_token_len=24, max_splits_nb=4)],
+        decryption_plugins=[make_plugin_retokenize(max_token_len=24, max_splits_nb=4)],
     )
     assert errors_nb(tokens, decrypted_with_propagate) <= errors_nb(tokens, decrypted)
 

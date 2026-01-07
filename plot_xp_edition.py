@@ -34,7 +34,7 @@ def get_params_mlm(metric_key: str) -> tuple[str, dict[str, str]]:
     return metric_name, {"window": window, "novel": novel, "edition": edition}
 
 
-def get_params_split(metric_key: str) -> tuple[str, dict[str, str]]:
+def get_params_retokenize(metric_key: str) -> tuple[str, dict[str, str]]:
     # t=max_token_len.s=max_split_nb.e=edition.metric_name
     m = re.match(r"t=([^\.]+)\.s=([^\.]+)\.e=([^\,]+),([^\.]+)\.(.*)", metric_key)
     if m is None:
@@ -85,7 +85,12 @@ XP_PARAMS_KEY = {
     "xp_edition": ["strategy", "edition"],
     "xp_edition_ner_novelties": ["strategy", "edition"],
     "xp_edition_mlm_params": ["window", "edition"],
-    "xp_edition_split_params": ["max_token_len", "max_split_nb", "edition"],
+    "xp_edition_split_params": [
+        "max_token_len",
+        "max_split_nb",
+        "edition",
+    ],  # deprecated for retokenize
+    "xp_edition_retokenize_params": ["max_token_len", "max_split_nb", "edition"],
     "xp_edition_propagate_order": ["pipeline", "edition"],
 }
 
@@ -93,7 +98,8 @@ XP_GET_PARAMS_FN = {
     "xp_edition": get_params,
     "xp_edition_ner_novelties": get_params,
     "xp_edition_mlm_params": get_params_mlm,
-    "xp_edition_split_params": get_params_split,
+    "xp_edition_split_params": get_params_retokenize,  # deprecated for retokenize
+    "xp_edition_retokenize_params": get_params_retokenize,
     "xp_edition_propagate_order": get_params_propagate,
 }
 

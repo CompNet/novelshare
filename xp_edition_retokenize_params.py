@@ -8,7 +8,7 @@ from sacred.run import Run
 from sacred.utils import apply_backspaces_and_linefeeds
 from tqdm import tqdm
 from novelties_bookshare.encrypt import encrypt_tokens
-from novelties_bookshare.decrypt import decrypt_tokens, make_plugin_split
+from novelties_bookshare.decrypt import decrypt_tokens, make_plugin_retokenize
 from novelties_bookshare.experiments.data import (
     iter_book_chapters,
     normalize_,
@@ -84,13 +84,13 @@ def main(
                     f"{edition}.t={max_token_len}.s={max_split_nb}"
                 )
 
-                split = make_plugin_split(max_token_len, max_split_nb)
+                retokenize = make_plugin_retokenize(max_token_len, max_split_nb)
                 t0 = time.process_time()
                 decrypted_tokens = decrypt_tokens(
                     reference_encrypted,
                     user_tokens,
                     hash_len=hash_len,
-                    decryption_plugins=[split],
+                    decryption_plugins=[retokenize],
                 )
                 t1 = time.process_time()
 

@@ -87,13 +87,13 @@ my_tokens = load_my_tokens()
 decrypted = decrypt_tokens(encrypted_source_tokens, my_tokens, hash_len=2)
 ```
 
-The more the user tokens differ from the source tokens, the more errors will occur in the decryption process. It is possible to use additional decryption plugins to improve performance. Here is some examples:
+The more the user tokens differ from the source tokens, the more errors will occur in the decryption process. It is possible to use additional decryption plugins to improve performance. Here are some examples:
 
 ```python
 from novelties_bookshare.decrypt import (
     make_plugin_propagate,
     make_pluging_mlm,
-    make_plugin_split,
+    make_plugin_retokenize,
     make_plugin_case,
 )
 
@@ -113,7 +113,7 @@ decrypted = decrypt_tokens(
     decryption_plugins=[
         make_plugin_propagate(),
         make_plugin_case(),
-        make_plugin_split(max_token_len=16, max_splits_nb=8),
+        make_plugin_retokenize(max_token_len=16, max_splits_nb=8),
     ],
 )
 
@@ -126,7 +126,7 @@ decrypted = decrypt_tokens(
     decryption_plugins=[
         make_plugin_propagate(),
         make_plugin_case(),
-        make_plugin_split(max_token_len=16, max_splits_nb=8),
+        make_plugin_retokenize(max_token_len=16, max_splits_nb=8),
         # if you have a GPU, you can pass device="cuda" for GPU
         # accelerated inference.
         make_plugin_mlm("answerdotai/ModernBERT-base", window=32)

@@ -13,7 +13,7 @@ for novel in ${NOVELS[@]}; do
            window_range='[16, 32, 64, 128]'\
            device=cuda
 
-    python xp_edition_split_params.py\
+    python xp_edition_retokenize_params.py\
            --id="xp_edition_split_params_n=${novel}_h=2"\
            with\
            novel="$novel"\

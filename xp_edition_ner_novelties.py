@@ -14,7 +14,7 @@ from novelties_bookshare.decrypt import (
     decrypt_tokens,
     make_plugin_mlm,
     make_plugin_propagate,
-    make_plugin_split,
+    make_plugin_retokenize,
     make_plugin_case,
 )
 from novelties_bookshare.experiments.data import normalize_, iter_book_chapters
@@ -51,8 +51,8 @@ def config():
     hash_len: int = 64
     chapter_limit: Optional[int] = None
     device: Literal["auto", "cuda", "cpu"] = "auto"
-    split_max_token_len: int = 16
-    split_max_splits_nb: int = 8
+    retokenize_max_token_len: int = 16
+    retokenize_max_splits_nb: int = 8
     mlm_window: int = 32
 
 
@@ -62,8 +62,8 @@ def main(
     hash_len: int,
     chapter_limit: Optional[int],
     device: Literal["auto", "cuda", "cpu"],
-    split_max_token_len: int,
-    split_max_splits_nb: int,
+    retokenize_max_token_len: int,
+    retokenize_max_splits_nb: int,
     mlm_window: int,
 ):
     print_config(_run)
@@ -88,9 +88,10 @@ def main(
         "naive": None,
         "case": [make_plugin_case()],
         "propagate": [make_plugin_propagate()],
-        "split": [
-            make_plugin_split(
-                max_token_len=split_max_token_len, max_splits_nb=split_max_splits_nb
+        "retokenize": [
+            make_plugin_retokenize(
+                max_token_len=retokenize_max_token_len,
+                max_splits_nb=retokenize_max_splits_nb,
             )
         ],
         "mlm": [
@@ -99,8 +100,9 @@ def main(
             )
         ],
         "pipe": [
-            make_plugin_split(
-                max_token_len=split_max_token_len, max_splits_nb=split_max_splits_nb
+            make_plugin_retokenize(
+                max_token_len=retokenize_max_token_len,
+                max_splits_nb=retokenize_max_splits_nb,
             ),
             make_plugin_mlm(
                 "answerdotai/ModernBERT-base", window=mlm_window, device=device

@@ -3,7 +3,8 @@ MARKERS = ["X", "p", "*", "D", "^", "v", "1", "o", "s"]
 
 def by_strat(strat: str) -> int:
     """Utility function to sort strategies in order"""
-    strats = ["naive", "case", "split", "mlm", "propagate", "pipe"]
+    # NOTE: split is deprecated for "retokenize"
+    strats = ["naive", "case", "retokenize", "split", "mlm", "propagate", "pipe"]
     try:
         return strats.index(strat)
     except ValueError:
@@ -15,7 +16,8 @@ def by_strat(strat: str) -> int:
 STRAT_COLOR_HINTS = {
     "naive": "#0C5DA5",
     "case": "#00B945",
-    "split": "#FF9500",
+    "split": "#FF9500",  # deprecated for 'retokenize'
+    "retokenize": "#FF9500",
     "mlm": "#FF2C00",
     "propagate": "#845B97",
     "pipe": "#474747",

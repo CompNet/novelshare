@@ -82,7 +82,7 @@ def make_plugin_propagate() -> DecryptPlugin:
     return plugin_propagate
 
 
-def plugin_split(
+def plugin_retokenize(
     opcodes: list[OpCode],
     user_tokens: list[str],
     decrypted_tokens: list[str],
@@ -145,9 +145,9 @@ def plugin_split(
     return decrypted_tokens
 
 
-def make_plugin_split(max_token_len: int, max_splits_nb: int) -> DecryptPlugin:
+def make_plugin_retokenize(max_token_len: int, max_splits_nb: int) -> DecryptPlugin:
     return ft.partial(
-        plugin_split, max_token_len=max_token_len, max_splits_nb=max_splits_nb
+        plugin_retokenize, max_token_len=max_token_len, max_splits_nb=max_splits_nb
     )
 
 

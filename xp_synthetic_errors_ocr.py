@@ -16,7 +16,7 @@ from novelties_bookshare.encrypt import encrypt_tokens
 from novelties_bookshare.decrypt import (
     make_plugin_mlm,
     make_plugin_propagate,
-    make_plugin_split,
+    make_plugin_retokenize,
     make_plugin_case,
 )
 from novelties_bookshare.decrypt import decrypt_tokens
@@ -89,11 +89,11 @@ def main(
             ft.partial(decrypt_tokens, decryption_plugins=[make_plugin_propagate()]),
         ),
         Strategy(
-            "split",
+            "retokenize",
             ft.partial(
                 decrypt_tokens,
                 decryption_plugins=[
-                    make_plugin_split(max_token_len=24, max_splits_nb=4)
+                    make_plugin_retokenize(max_token_len=24, max_splits_nb=4)
                 ],
             ),
         ),
@@ -115,7 +115,7 @@ def main(
                 decryption_plugins=[
                     make_plugin_propagate(),
                     make_plugin_case(),
-                    make_plugin_split(max_token_len=24, max_splits_nb=4),
+                    make_plugin_retokenize(max_token_len=24, max_splits_nb=4),
                     make_plugin_mlm(
                         "answerdotai/ModernBERT-base", window=16, device=device
                     ),
