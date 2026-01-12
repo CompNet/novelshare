@@ -3,7 +3,7 @@
         (url "https://gitlab.com/Aethor/guix-aethor")
         (branch "main")
         (commit
-         "87c1c77caf7a75388e9271bbcec1bdba6b35ccf7")
+         "15057cb12fbdb7d357e41773fbbbed7696c35c86")
         (introduction
           (make-channel-introduction
             "b9b2fe220f3fedd8f22dcbd74ab6c817a62378e0"

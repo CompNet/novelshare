@@ -13,6 +13,4 @@
   "python-hypothesis"
   "python-sacred"
   "python-scrambledtext"
-  ;; missing:
-  ;; - python-scienceplots
-  ))
+  "python-scienceplots"))

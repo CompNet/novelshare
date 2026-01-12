@@ -43,8 +43,6 @@ We provide a more reproducible environment using `guix`:
 guix time-machine -C channels.scm -- shell -C -m manifest.scm
 ```
 
-Note: the package `python-scienceplots` is not packaged yet in Guix and should therefore be installed manually (`pip install scienceplots`).
-
 
 # Reproducing Experiments
 
