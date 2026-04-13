@@ -9,9 +9,9 @@ from sacred.commands import print_config
 from sacred.run import Run
 from sacred.utils import apply_backspaces_and_linefeeds
 from novelties_bookshare.conll import load_conll2002_bio
-from novelties_bookshare.encrypt import encrypt_tokens
+from novelties_bookshare.encrypt import hash_tokens
 from novelties_bookshare.decrypt import (
-    decrypt_tokens,
+    align_tokens,
     make_plugin_mlm,
     make_plugin_propagate,
     make_plugin_retokenize,
@@ -115,7 +115,7 @@ def main(
     all_errors = {strat: {} for strat in strategies.keys()}
 
     reference_encrypted = [
-        encrypt_tokens(chapter, hash_len=hash_len) for chapter in reference_chapters
+        hash_tokens(chapter, hash_len=hash_len) for chapter in reference_chapters
     ]
 
     progress = tqdm(strategies.items(), ascii=True, total=len(strategies))
@@ -123,11 +123,11 @@ def main(
         progress.set_description(strat)
 
         t0 = time.process_time()
-        decrypted_tokens = decrypt_tokens(
+        decrypted_tokens = align_tokens(
             reference_encrypted,
             user_chapters,
             hash_len=hash_len,
-            decryption_plugins=strat_plugins,
+            alignment_plugins=strat_plugins,
         )
         t1 = time.process_time()
 

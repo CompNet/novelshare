@@ -13,14 +13,14 @@ from sacred.observers import FileStorageObserver
 from sacred.commands import print_config
 from sacred.run import Run
 from sacred.utils import apply_backspaces_and_linefeeds
-from novelties_bookshare.encrypt import encrypt_tokens
+from novelties_bookshare.encrypt import hash_tokens
 from novelties_bookshare.decrypt import (
     make_plugin_mlm,
     make_plugin_propagate,
     make_plugin_retokenize,
     make_plugin_case,
 )
-from novelties_bookshare.decrypt import decrypt_tokens
+from novelties_bookshare.decrypt import align_tokens
 from novelties_bookshare.experiments.data import iter_book_chapters
 from novelties_bookshare.experiments.metrics import errors_nb, errors_percent
 from novelties_bookshare.experiments.errors import (
@@ -90,18 +90,18 @@ def main(
     ]
 
     strategies = [
-        Strategy("naive", decrypt_tokens),
+        Strategy("naive", align_tokens),
         Strategy(
-            "case", ft.partial(decrypt_tokens, decryption_plugins=[make_plugin_case()])
+            "case", ft.partial(align_tokens, decryption_plugins=[make_plugin_case()])
         ),
         Strategy(
             "propagate",
-            ft.partial(decrypt_tokens, decryption_plugins=[make_plugin_propagate()]),
+            ft.partial(align_tokens, decryption_plugins=[make_plugin_propagate()]),
         ),
         Strategy(
             "retokenize",
             ft.partial(
-                decrypt_tokens,
+                align_tokens,
                 decryption_plugins=[
                     make_plugin_retokenize(max_token_len=24, max_splits_nb=4)
                 ],
@@ -110,7 +110,7 @@ def main(
         Strategy(
             "mlm",
             ft.partial(
-                decrypt_tokens,
+                align_tokens,
                 decryption_plugins=[
                     make_plugin_mlm(
                         "answerdotai/ModernBERT-base", window=16, device=device
@@ -121,7 +121,7 @@ def main(
         Strategy(
             "pipe",
             ft.partial(
-                decrypt_tokens,
+                align_tokens,
                 decryption_plugins=[
                     make_plugin_propagate(),
                     make_plugin_case(),
@@ -152,7 +152,7 @@ def main(
         t0 = time.process_time()
         chapters = list(iter_book_chapters(book_path, chapter_limit=chapter_limit))
         encrypted_chapters = [
-            encrypt_tokens(chapter, hash_len=hash_len) for chapter in chapters
+            hash_tokens(chapter, hash_len=hash_len) for chapter in chapters
         ]
         user_chapters = [
             errors_fn(chapter, int(len(chapter) * error_ratio)) for chapter in chapters

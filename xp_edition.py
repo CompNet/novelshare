@@ -7,9 +7,9 @@ from sacred.observers import FileStorageObserver
 from sacred.commands import print_config
 from sacred.run import Run
 from sacred.utils import apply_backspaces_and_linefeeds
-from novelties_bookshare.encrypt import encrypt_tokens
+from novelties_bookshare.encrypt import hash_tokens
 from novelties_bookshare.decrypt import (
-    decrypt_tokens,
+    align_tokens,
     make_plugin_mlm,
     make_plugin_propagate,
     make_plugin_retokenize,
@@ -106,7 +106,7 @@ def main(
 
     for edition, user_tokens in wild_editions.items():
         reference_encrypted = [
-            encrypt_tokens(chapter, hash_len=hash_len) for chapter in reference_chapters
+            hash_tokens(chapter, hash_len=hash_len) for chapter in reference_chapters
         ]
         # If we have the same number of chapters, we assume that
         # the chapters are aligned. Otherwise, we have to perform
@@ -121,11 +121,11 @@ def main(
             progress.set_description(f"{edition}.{strat}")
 
             t0 = time.process_time()
-            decrypted_tokens = decrypt_tokens(
+            decrypted_tokens = align_tokens(
                 reference_encrypted,
                 user_tokens,
                 hash_len=hash_len,
-                decryption_plugins=strat_plugins,
+                alignment_plugins=strat_plugins,
             )
             t1 = time.process_time()
 

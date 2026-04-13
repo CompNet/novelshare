@@ -7,8 +7,8 @@ from sacred.commands import print_config
 from sacred.run import Run
 from sacred.utils import apply_backspaces_and_linefeeds
 from tqdm import tqdm
-from novelties_bookshare.encrypt import encrypt_tokens
-from novelties_bookshare.decrypt import decrypt_tokens, make_plugin_retokenize
+from novelties_bookshare.encrypt import hash_tokens
+from novelties_bookshare.decrypt import align_tokens, make_plugin_retokenize
 from novelties_bookshare.experiments.data import (
     iter_book_chapters,
     normalize_,
@@ -67,7 +67,7 @@ def main(
 
     for edition, user_tokens in wild_editions.items():
         reference_encrypted = [
-            encrypt_tokens(chapter, hash_len=hash_len) for chapter in reference_chapters
+            hash_tokens(chapter, hash_len=hash_len) for chapter in reference_chapters
         ]
         # If we have the same number of chapters, we assume that
         # the chapters are aligned. Otherwise, we have to perform
@@ -86,11 +86,11 @@ def main(
 
                 retokenize = make_plugin_retokenize(max_token_len, max_split_nb)
                 t0 = time.process_time()
-                decrypted_tokens = decrypt_tokens(
+                decrypted_tokens = align_tokens(
                     reference_encrypted,
                     user_tokens,
                     hash_len=hash_len,
-                    decryption_plugins=[retokenize],
+                    alignment_plugins=[retokenize],
                 )
                 t1 = time.process_time()
 

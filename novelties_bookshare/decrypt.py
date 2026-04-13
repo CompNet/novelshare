@@ -5,7 +5,7 @@ import functools as ft
 from collections import Counter
 from more_itertools import flatten
 from novelties_bookshare.conll import dump_conll2002_bio, load_conll2002_bio
-from novelties_bookshare.encrypt import encrypt_token, encrypt_tokens
+from novelties_bookshare.hash import hash_token, hash_tokens
 from novelties_bookshare.utils import strksplit
 
 
@@ -24,8 +24,8 @@ def load_user_tokens(path: Optional[str], **kwargs) -> list[str]:
 
 
 OpCode = tuple[Literal["replace", "delete", "insert", "equal"], int, int, int, int]
-# difflib SequenceMatcher opcodes, user_tokens, decrypted_tokens, encrypted_tokens, hash_len
-DecryptPlugin = Callable[
+# difflib SequenceMatcher opcodes, user_tokens, aligned_tokens, hashed_tokens, hash_len
+AlignmentPlugin = Callable[
     [list[OpCode], list[str], list[str], list[str], Optional[int]], list[str]
 ]
 
@@ -33,14 +33,14 @@ DecryptPlugin = Callable[
 def plugin_propagate(
     opcodes: list[OpCode],
     user_tokens: list[str],
-    decrypted_tokens: list[str],
-    encrypted_tokens: list[str],
+    aligned_tokens: list[str],
+    hashed_tokens: list[str],
     hash_len: Optional[int],
 ) -> list[str]:
-    """Propagate previous choices to non-decrypted tokens
+    """Propagate previous choices to non-aligned tokens
 
-    This decryption plugins tries to decrypt a substituted or deleted
-    token if it was already decryped elsewhere in the text.
+    This alignment plugins tries to align a substituted or deleted
+    token if it was already aligned elsewhere in the text.
     """
     # { hash => most_frequent_decoded_token }
     hash_dict = {}
@@ -50,16 +50,16 @@ def plugin_propagate(
         # token. Maybe we did decode some of these tokens before
         # else and we can use them to retrieve this token.
         if tag == "delete" or tag == "replace":
-            for i, encrypted_token in enumerate(encrypted_tokens[i1:i2]):
-                # did we already see this encrypted_token before? If
-                # not, we need to find the most frequent decrypted
-                # token corresponding to this hash
-                if not encrypted_token in hash_dict:
+            for i, hashed_token in enumerate(hashed_tokens[i1:i2]):
+                # did we already see this hashed_token before? If not,
+                # we need to find the most frequent aligned token
+                # corresponding to this hash
+                if not hashed_token in hash_dict:
                     same_hash_counter = Counter(
                         [
                             token
-                            for hsh, token in zip(encrypted_tokens, decrypted_tokens)
-                            if hsh == encrypted_token and token != "[UNK]"
+                            for hsh, token in zip(hashed_tokens, aligned_tokens)
+                            if hsh == hashed_token and token != "[UNK]"
                         ]
                     )
                     most_frequent_decoded_token = (
@@ -67,26 +67,26 @@ def plugin_propagate(
                         if len(same_hash_counter) > 0
                         else None
                     )
-                    hash_dict[encrypted_token] = most_frequent_decoded_token
+                    hash_dict[hashed_token] = most_frequent_decoded_token
                 # update the memory of most frequent decoded token for
                 # the current hash
-                most_frequent_decoded_token = hash_dict[encrypted_token]
+                most_frequent_decoded_token = hash_dict[hashed_token]
 
                 if not most_frequent_decoded_token is None:
-                    decrypted_tokens[i1 + i] = most_frequent_decoded_token
+                    aligned_tokens[i1 + i] = most_frequent_decoded_token
 
-    return decrypted_tokens
+    return aligned_tokens
 
 
-def make_plugin_propagate() -> DecryptPlugin:
+def make_plugin_propagate() -> AlignmentPlugin:
     return plugin_propagate
 
 
 def plugin_retokenize(
     opcodes: list[OpCode],
     user_tokens: list[str],
-    decrypted_tokens: list[str],
-    encrypted_tokens: list[str],
+    aligned_tokens: list[str],
+    hashed_tokens: list[str],
     hash_len: Optional[int],
     max_token_len: int,
     max_splits_nb: int,
@@ -123,7 +123,7 @@ def plugin_retokenize(
             continue
 
         # we will try different splits of the tokens to see if they
-        # match the substituted tokens in encrypted_tokens
+        # match the substituted tokens in hashed_tokens
         tokens_to_split = "".join(user_tokens[j1:j2])
 
         if len(tokens_to_split) > max_token_len:
@@ -137,15 +137,15 @@ def plugin_retokenize(
             continue
 
         for split in strksplit(tokens_to_split, splits_nb):
-            encrypted_split = encrypt_tokens(split, hash_len=hash_len)
-            if encrypted_split == encrypted_tokens[i1:i2]:
-                decrypted_tokens[i1:i2] = split
+            hashed_split = hash_tokens(split, hash_len=hash_len)
+            if hashed_split == hashed_tokens[i1:i2]:
+                aligned_tokens[i1:i2] = split
                 break
 
-    return decrypted_tokens
+    return aligned_tokens
 
 
-def make_plugin_retokenize(max_token_len: int, max_splits_nb: int) -> DecryptPlugin:
+def make_plugin_retokenize(max_token_len: int, max_splits_nb: int) -> AlignmentPlugin:
     return ft.partial(
         plugin_retokenize, max_token_len=max_token_len, max_splits_nb=max_splits_nb
     )
@@ -154,8 +154,8 @@ def make_plugin_retokenize(max_token_len: int, max_splits_nb: int) -> DecryptPlu
 def plugin_mlm(
     opcodes: list[OpCode],
     user_tokens: list[str],
-    decrypted_tokens: list[str],
-    encrypted_tokens: list[str],
+    aligned_tokens: list[str],
+    hashed_tokens: list[str],
     hash_len: Optional[int],
     pipeline,
     window: int,
@@ -173,12 +173,12 @@ def plugin_mlm(
             # the user did not supply some tokens, or supplied a wrong
             # token. In that case, we try to decode the token using BERT
             for i in range(i2 - i1):
-                left = decrypted_tokens[i1 + i - window : i1 + i]
-                right = decrypted_tokens[i1 + i + 1 : i1 + i + window]
+                left = aligned_tokens[i1 + i - window : i1 + i]
+                right = aligned_tokens[i1 + i + 1 : i1 + i + window]
                 X = left + ["[MASK]"] + right
                 X = " ".join(X)  # pipeline expects a string pick the
-                # probable token whose encrypted form match the
-                # encrypted gold token
+                # probable token whose hashed form match the hashed
+                # gold token
                 candidates = pipeline(X)
                 # it's possible (although unlikely) that other mask
                 # tokens are here. In that case, the pipeline returns
@@ -191,16 +191,16 @@ def plugin_mlm(
                 # perform the replacement
                 for cand in candidates:
                     cand = cand["token_str"].strip(" ")
-                    encrypted_cand = encrypt_token(cand, hash_len)
-                    if encrypted_cand == encrypted_tokens[i1 + i]:
-                        decrypted_tokens[i1 + i] = cand
+                    hashed_cand = hash_token(cand, hash_len)
+                    if hashed_cand == hashed_tokens[i1 + i]:
+                        aligned_tokens[i1 + i] = cand
 
-    return decrypted_tokens
+    return aligned_tokens
 
 
 def make_plugin_mlm(
     model: str, window: int, device: Literal["auto", "cuda", "cpu"] = "auto"
-) -> DecryptPlugin:
+) -> AlignmentPlugin:
     from transformers import pipeline
     import torch
 
@@ -216,8 +216,8 @@ def make_plugin_mlm(
 def plugin_case(
     opcodes: list[OpCode],
     user_tokens: list[str],
-    decrypted_tokens: list[str],
-    encrypted_tokens: list[str],
+    aligned_tokens: list[str],
+    hashed_tokens: list[str],
     hash_len: Optional[int],
 ) -> list[str]:
     """Fix incorrect user token casing."""
@@ -225,30 +225,28 @@ def plugin_case(
         if tag != "replace":
             continue
 
-        for k, (user_token, encrypted_token) in enumerate(
-            zip(user_tokens[j1:j2], encrypted_tokens[i1:i2])
+        for k, (user_token, hashed_token) in enumerate(
+            zip(user_tokens[j1:j2], hashed_tokens[i1:i2])
         ):
             for casing in [str.lower, str.upper, str.capitalize]:
-                encrypted_user_token = encrypt_token(
-                    casing(user_token), hash_len=hash_len
-                )
-                if encrypted_user_token == encrypted_token:
-                    decrypted_tokens[i1 + k] = casing(user_token)
+                hashed_user_token = hash_token(casing(user_token), hash_len=hash_len)
+                if hashed_user_token == hashed_token:
+                    aligned_tokens[i1 + k] = casing(user_token)
 
-    return decrypted_tokens
+    return aligned_tokens
 
 
-def make_plugin_case() -> DecryptPlugin:
+def make_plugin_case() -> AlignmentPlugin:
     return plugin_case
 
 
 def plugin_cycle(
     opcodes: list[OpCode],
     user_tokens: list[str],
-    decrypted_tokens: list[str],
-    encrypted_tokens: list[str],
+    aligned_tokens: list[str],
+    hashed_tokens: list[str],
     hash_len: Optional[int],
-    plugins: list[DecryptPlugin],
+    plugins: list[AlignmentPlugin],
     budget: Optional[int] = None,
 ) -> list[str]:
     plugin_calls_nb = 0
@@ -258,19 +256,19 @@ def plugin_cycle(
         should_restart = False
 
         for plugin in plugins:
-            decrypted_tokens = plugin(
-                opcodes, user_tokens, decrypted_tokens, encrypted_tokens, hash_len
+            aligned_tokens = plugin(
+                opcodes, user_tokens, aligned_tokens, hashed_tokens, hash_len
             )
             plugin_calls_nb += 1
 
             if not budget is None and plugin_calls_nb == budget:
-                return decrypted_tokens
+                return aligned_tokens
 
             errors = sum(
                 1 if ref != pred else 0
                 for ref, pred in zip(
-                    encrypted_tokens,
-                    encrypt_tokens(decrypted_tokens, hash_len=hash_len),
+                    hashed_tokens,
+                    hash_tokens(aligned_tokens, hash_len=hash_len),
                 )
             )
             if errors < lowest_errors:
@@ -278,28 +276,28 @@ def plugin_cycle(
                 should_restart = True
                 break
 
-    return decrypted_tokens
+    return aligned_tokens
 
 
 def make_plugin_cycle(
-    plugins: list[DecryptPlugin], budget: Optional[int] = None
-) -> DecryptPlugin:
+    plugins: list[AlignmentPlugin], budget: Optional[int] = None
+) -> AlignmentPlugin:
     return ft.partial(plugin_cycle, plugins=plugins, budget=budget)
 
 
 def _get_opcodes(
-    encrypted_tokens: list[str] | list[list[str]],
-    encrypted_user_tokens: list[str] | list[list[str]],
+    hashed_tokens: list[str] | list[list[str]],
+    hashed_user_tokens: list[str] | list[list[str]],
 ) -> list[OpCode]:
-    if isinstance(encrypted_tokens[0], str):
-        matcher = difflib.SequenceMatcher(None, encrypted_tokens, encrypted_user_tokens)
+    if isinstance(hashed_tokens[0], str):
+        matcher = difflib.SequenceMatcher(None, hashed_tokens, hashed_user_tokens)
         return matcher.get_opcodes()
 
-    assert len(encrypted_tokens) == len(encrypted_user_tokens)
+    assert len(hashed_tokens) == len(hashed_user_tokens)
     cur_i = 0
     cur_j = 0
     opcodes = []
-    for block, user_block in zip(encrypted_tokens, encrypted_user_tokens):
+    for block, user_block in zip(hashed_tokens, hashed_user_tokens):
         matcher = difflib.SequenceMatcher(None, block, user_block)
         local_opcodes = matcher.get_opcodes()
         global_opcodes = [
@@ -312,17 +310,18 @@ def _get_opcodes(
     return opcodes
 
 
-def decrypt_tokens(
-    encrypted_tokens: list[str] | list[list[str]],
+def align_tokens(
+    hashed_tokens: list[str] | list[list[str]],
     user_tokens: list[str] | list[list[str]],
     hash_len: int | None = None,
-    decryption_plugins: list[DecryptPlugin] | None = None,
+    alignment_plugins: list[AlignmentPlugin] | None = None,
 ) -> list[str]:
-    """Attempt to decrypt tokens using the provided user tokens.
+    """Attempt to align tokens with annotations using the provided
+    user tokens.
 
     .. note::
 
-        The parameters encrypted_tokens, tags and user_tokens can either
+        The parameters hashed_tokens, tags and user_tokens can either
         be a list or a list of list.  Using a list of list is useful for
         performance: in that case, the alignment will be computed for
         pairs of smaller sequences, improving performance due to the
@@ -331,56 +330,59 @@ def decrypt_tokens(
         that there is no alignment between a token from a block and a
         token from another (for example, chapters from a novel).
 
-    :param encrypted_tokens: tokens encrypted with SHA-256
+    :param hashed_tokens: tokens hashed with SHA-256
     :param tags: NER tags
     :param user_tokens: user tokens, in clear
     :param hash_len: length of the SHA-256 hash (default: 64)
-    :param decryption_plugins: a list of decryption plugins to improve
+    :param alignment_plugins: a list of alignment plugins to improve
         performance
     """
-    if len(encrypted_tokens) == 0:
+    if len(hashed_tokens) == 0:
         return []
 
     is_block_input = isinstance(user_tokens[0], list)
 
     if is_block_input:
-        encrypted_user_tokens = [
-            encrypt_tokens(tokens, hash_len=hash_len) for tokens in user_tokens
+        hashed_user_tokens = [
+            hash_tokens(tokens, hash_len=hash_len) for tokens in user_tokens
         ]
     else:
-        encrypted_user_tokens = encrypt_tokens(user_tokens, hash_len=hash_len)
+        hashed_user_tokens = hash_tokens(user_tokens, hash_len=hash_len)
 
-    opcodes = _get_opcodes(encrypted_tokens, encrypted_user_tokens)
+    opcodes = _get_opcodes(hashed_tokens, hashed_user_tokens)
     if is_block_input:
-        encrypted_tokens = list(flatten(encrypted_tokens))
+        hashed_tokens = list(flatten(hashed_tokens))
         user_tokens = list(flatten(user_tokens))
-    decrypted_tokens = ["[UNK]" for _ in encrypted_tokens]
+    aligned_tokens = ["[UNK]" for _ in hashed_tokens]
     for tag, i1, i2, j1, j2 in opcodes:
         if tag == "equal":
-            decrypted_tokens[i1:i2] = user_tokens[j1:j2]
+            aligned_tokens[i1:i2] = user_tokens[j1:j2]
 
-    if not decryption_plugins is None:
-        for plugin in decryption_plugins:
+    if not alignment_plugins is None:
+        for plugin in alignment_plugins:
             # the previous plugins may have fixed some errors. We
             # remove the fixed cases there to prevent the next plugins
             # to fix these errors again.
             opcodes = [
                 (tag, i1, i2, j1, j2)
                 for tag, i1, i2, j1, j2 in opcodes
-                if any(t == "[UNK]" for t in decrypted_tokens[i1:i2])
+                if any(t == "[UNK]" for t in aligned_tokens[i1:i2])
             ]
-            decrypted_tokens = plugin(
-                opcodes, user_tokens, decrypted_tokens, encrypted_tokens, hash_len
+            aligned_tokens = plugin(
+                opcodes, user_tokens, aligned_tokens, hashed_tokens, hash_len
             )
 
-    assert len(decrypted_tokens) == len(encrypted_tokens)
-    return decrypted_tokens
+    assert len(aligned_tokens) == len(hashed_tokens)
+    return aligned_tokens
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "-e", "--encrypted-file", type=str, help="Encrypted CoNLL-2002 file."
+        "-i",
+        "--input-file",
+        type=str,
+        help="Input CoNLL-2002 file, with tokens hashed.",
     )
     parser.add_argument(
         "-u", "--user-file", type=str, help="Input user file (one token per line)."
@@ -395,9 +397,9 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--output-file", type=str, help="Output CoNLL-2002 file.")
     args = parser.parse_args()
 
-    encrypted_tokens, tags = load_conll2002_bio(
+    hashed_tokens, tags = load_conll2002_bio(
         args.encrypted_file, separator=args.separator
     )
     user_tokens = load_user_tokens(args.user_file)
-    decrypted_tokens = decrypt_tokens(encrypted_tokens, tags, user_tokens)
-    dump_conll2002_bio(decrypted_tokens, tags, args.output_file, args.separator)
+    aligned_tokens = align_tokens(hashed_tokens, tags, user_tokens)
+    dump_conll2002_bio(aligned_tokens, tags, args.output_file, args.separator)
