@@ -12,33 +12,33 @@ from sacred.observers import FileStorageObserver
 from sacred.commands import print_config
 from sacred.run import Run
 from sacred.utils import apply_backspaces_and_linefeeds
-from novelties_bookshare.encrypt import hash_tokens
-from novelties_bookshare.decrypt import (
+from novelties_bookshare.hash import hash_tokens
+from novelties_bookshare.align import (
+    align_tokens,
     make_plugin_mlm,
     make_plugin_propagate,
     make_plugin_retokenize,
     make_plugin_case,
 )
-from novelties_bookshare.decrypt import align_tokens
 from novelties_bookshare.experiments.data import iter_book_chapters, load_book
-from novelties_bookshare.experiments.metrics import record_decryption_metrics_
+from novelties_bookshare.experiments.metrics import record_alignment_metrics_
 from novelties_bookshare.experiments.errors import ocr_scramble
 
 ex = Experiment()
 ex.captured_out_filter = apply_backspaces_and_linefeeds  # type: ignore
 ex.observers.append(FileStorageObserver("runs"))
 
-DecryptFn = Callable[
+AlignFn = Callable[
     # args:
     [
-        # encrypted_chapters
+        # hashed_chapters
         list[list[str]],
         # user_chapters
         list[list[str]],
         # hash_len
         int | None,
     ],
-    # returns: decrypted tokens
+    # returns: aligned tokens
     list[str],
 ]
 
@@ -46,7 +46,7 @@ DecryptFn = Callable[
 @dataclass
 class Strategy:
     name: str
-    decrypt_fn: DecryptFn
+    align_fn: AlignFn
 
 
 @ex.config
@@ -82,17 +82,17 @@ def main(
     strategies = [
         Strategy("naive", align_tokens),
         Strategy(
-            "case", ft.partial(align_tokens, decryption_plugins=[make_plugin_case()])
+            "case", ft.partial(align_tokens, alignment_plugins=[make_plugin_case()])
         ),
         Strategy(
             "propagate",
-            ft.partial(align_tokens, decryption_plugins=[make_plugin_propagate()]),
+            ft.partial(align_tokens, alignment_plugins=[make_plugin_propagate()]),
         ),
         Strategy(
             "retokenize",
             ft.partial(
                 align_tokens,
-                decryption_plugins=[
+                alignment_plugins=[
                     make_plugin_retokenize(max_token_len=24, max_splits_nb=4)
                 ],
             ),
@@ -101,7 +101,7 @@ def main(
             "mlm",
             ft.partial(
                 align_tokens,
-                decryption_plugins=[
+                alignment_plugins=[
                     make_plugin_mlm(
                         "answerdotai/ModernBERT-base", window=16, device=device
                     )
@@ -112,7 +112,7 @@ def main(
             "pipe",
             ft.partial(
                 align_tokens,
-                decryption_plugins=[
+                alignment_plugins=[
                     make_plugin_propagate(),
                     make_plugin_case(),
                     make_plugin_retokenize(max_token_len=24, max_splits_nb=4),
@@ -126,7 +126,7 @@ def main(
 
     _run.info[f"ocr_scramble.errors_unit"] = "(WER,CER)"
 
-    def decrypt_setup_test(
+    def align_setup_test(
         job_i: int,
         book_path: pl.Path,
         strategy: Strategy,
@@ -134,27 +134,25 @@ def main(
     ) -> tuple[int, list[list[str]], list[str], float]:
         t0 = time.process_time()
         chapters = list(iter_book_chapters(book_path, chapter_limit=chapter_limit))
-        encrypted_chapters = [
+        hashed_chapters = [
             hash_tokens(chapter, hash_len=hash_len) for chapter in chapters
         ]
         user_chapters = [ocr_scramble(chapter, *wer_cer) for chapter in chapters]
-        decrypted_tokens = strategy.decrypt_fn(
-            encrypted_chapters, user_chapters, hash_len
-        )
+        aligned_tokens = strategy.align_fn(hashed_chapters, user_chapters, hash_len)
         t1 = time.process_time()
-        return job_i, chapters, decrypted_tokens, t1 - t0
+        return job_i, chapters, aligned_tokens, t1 - t0
 
     setups = list(it.product(corpus, strategies, zip(wer_grid, cer_grid)))
     progress = tqdm(total=len(setups), ascii=True)
 
     with Parallel(n_jobs=jobs_nb) as parallel:
-        for job_i, gold_chapters, decrypted_tokens, duration_s in parallel(
-            delayed(decrypt_setup_test)(i, *args) for i, args in enumerate(setups)
+        for job_i, gold_chapters, aligned_tokens, duration_s in parallel(
+            delayed(align_setup_test)(i, *args) for i, args in enumerate(setups)
         ):
             gold_tokens = list(flatten(gold_chapters))
             book_path, strategy, (wer, cer) = setups[job_i]
             setup_name = f"b={book_path.name}.s={strategy.name}.n=ocr_scramble"
-            record_decryption_metrics_(
-                _run, setup_name, gold_tokens, decrypted_tokens, duration_s
+            record_alignment_metrics_(
+                _run, setup_name, gold_tokens, aligned_tokens, duration_s
             )
             progress.update()

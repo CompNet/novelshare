@@ -5,7 +5,7 @@ from statistics import mean
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 import scienceplots
-from novelties_bookshare.encrypt import hash_tokens
+from novelties_bookshare.hash import hash_tokens
 from novelties_bookshare.experiments.data import load_book, EDITION_SETS
 
 if __name__ == "__main__":
@@ -23,8 +23,8 @@ if __name__ == "__main__":
     Y = []
     for hash_len in tqdm(X, ascii=True):
         hash2tokens = defaultdict(set)
-        encrypted = hash_tokens(tokens, hash_len=hash_len)
-        for e, token in zip(encrypted, tokens):
+        hashed = hash_tokens(tokens, hash_len=hash_len)
+        for e, token in zip(hashed, tokens):
             hash2tokens[e].add(token)
         Y.append(mean(len(v) - 1 for v in hash2tokens.values()))
 

@@ -7,8 +7,8 @@ from sacred.commands import print_config
 from sacred.run import Run
 from sacred.utils import apply_backspaces_and_linefeeds
 from tqdm import tqdm
-from novelties_bookshare.encrypt import hash_tokens
-from novelties_bookshare.decrypt import (
+from novelties_bookshare.hash import hash_tokens
+from novelties_bookshare.align import (
     align_tokens,
     make_plugin_mlm,
     make_plugin_propagate,
@@ -20,7 +20,7 @@ from novelties_bookshare.experiments.data import (
     normalize_,
     EDITION_SETS,
 )
-from novelties_bookshare.experiments.metrics import record_decryption_metrics_
+from novelties_bookshare.experiments.metrics import record_alignment_metrics_
 
 ex = Experiment()
 ex.captured_out_filter = apply_backspaces_and_linefeeds  # type: ignore
@@ -118,7 +118,7 @@ def main(
     progress = tqdm(total=len(wild_editions) * len(pipelines), ascii=True)
 
     for edition, user_tokens in wild_editions.items():
-        reference_encrypted = [
+        reference_hashed = [
             hash_tokens(chapter, hash_len=hash_len) for chapter in reference_chapters
         ]
         # If we have the same number of chapters, we assume that
@@ -128,14 +128,14 @@ def main(
         same_number_of_chapters = len(reference_chapters) == len(user_tokens)
         if not same_number_of_chapters:
             user_tokens = list(flatten(user_tokens))
-            reference_encrypted = list(flatten(reference_encrypted))
+            reference_hashed = list(flatten(reference_hashed))
 
         for pipe_title, pipe in pipelines:
             progress.set_description(f"{edition}.p={pipe_title}")
 
             t0 = time.process_time()
-            decrypted_tokens = align_tokens(
-                reference_encrypted,
+            aligned_tokens = align_tokens(
+                reference_hashed,
                 user_tokens,
                 hash_len=hash_len,
                 alignment_plugins=pipe,
@@ -144,11 +144,11 @@ def main(
 
             reference_tokens = list(flatten(reference_chapters))
             setup_name = f"p={pipe_title}.e={novel},{edition}"
-            record_decryption_metrics_(
+            record_alignment_metrics_(
                 _run,
                 setup_name,
                 reference_tokens,
-                decrypted_tokens,
+                aligned_tokens,
                 t1 - t0,
             )
 

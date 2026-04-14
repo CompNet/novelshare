@@ -7,14 +7,14 @@ from sacred.commands import print_config
 from sacred.run import Run
 from sacred.utils import apply_backspaces_and_linefeeds
 from tqdm import tqdm
-from novelties_bookshare.encrypt import hash_tokens
-from novelties_bookshare.decrypt import align_tokens, make_plugin_retokenize
+from novelties_bookshare.hash import hash_tokens
+from novelties_bookshare.align import align_tokens, make_plugin_retokenize
 from novelties_bookshare.experiments.data import (
     iter_book_chapters,
     normalize_,
     EDITION_SETS,
 )
-from novelties_bookshare.experiments.metrics import record_decryption_metrics_
+from novelties_bookshare.experiments.metrics import record_alignment_metrics_
 
 ex = Experiment()
 ex.captured_out_filter = apply_backspaces_and_linefeeds  # type: ignore
@@ -66,7 +66,7 @@ def main(
     )
 
     for edition, user_tokens in wild_editions.items():
-        reference_encrypted = [
+        reference_hashed = [
             hash_tokens(chapter, hash_len=hash_len) for chapter in reference_chapters
         ]
         # If we have the same number of chapters, we assume that
@@ -76,7 +76,7 @@ def main(
         same_number_of_chapters = len(reference_chapters) == len(user_tokens)
         if not same_number_of_chapters:
             user_tokens = list(flatten(user_tokens))
-            reference_encrypted = list(flatten(reference_encrypted))
+            reference_hashed = list(flatten(reference_hashed))
 
         for max_token_len in max_token_len_range:
             for max_split_nb in max_splits_nb_range:
@@ -86,8 +86,8 @@ def main(
 
                 retokenize = make_plugin_retokenize(max_token_len, max_split_nb)
                 t0 = time.process_time()
-                decrypted_tokens = align_tokens(
-                    reference_encrypted,
+                aligned_tokens = align_tokens(
+                    reference_hashed,
                     user_tokens,
                     hash_len=hash_len,
                     alignment_plugins=[retokenize],
@@ -96,11 +96,11 @@ def main(
 
                 reference_tokens = list(flatten(reference_chapters))
                 setup_name = f"t={max_token_len}.s={max_split_nb}.e={novel},{edition}"
-                record_decryption_metrics_(
+                record_alignment_metrics_(
                     _run,
                     setup_name,
                     reference_tokens,
-                    decrypted_tokens,
+                    aligned_tokens,
                     t1 - t0,
                 )
 

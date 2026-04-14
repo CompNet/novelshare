@@ -75,7 +75,7 @@ def errors(ref_tokens: list[str], pred_tokens: list[str]) -> dict[str, list[str]
     return error_dict
 
 
-def record_decryption_metrics_(
+def record_alignment_metrics_(
     _run: Run,
     setup_name: str,
     ref_tokens: list[str],

@@ -9,8 +9,8 @@ from sacred.commands import print_config
 from sacred.run import Run
 from sacred.utils import apply_backspaces_and_linefeeds
 from novelties_bookshare.conll import load_conll2002_bio
-from novelties_bookshare.encrypt import hash_tokens
-from novelties_bookshare.decrypt import (
+from novelties_bookshare.hash import hash_tokens
+from novelties_bookshare.align import (
     align_tokens,
     make_plugin_mlm,
     make_plugin_propagate,
@@ -18,7 +18,7 @@ from novelties_bookshare.decrypt import (
     make_plugin_case,
 )
 from novelties_bookshare.experiments.data import normalize_, iter_book_chapters
-from novelties_bookshare.experiments.metrics import record_decryption_metrics_, errors
+from novelties_bookshare.experiments.metrics import record_alignment_metrics_, errors
 
 ex = Experiment()
 ex.captured_out_filter = apply_backspaces_and_linefeeds  # type: ignore
@@ -114,7 +114,7 @@ def main(
     # { strategy => { ref_token => [ incorrect pred tokens ] } }
     all_errors = {strat: {} for strat in strategies.keys()}
 
-    reference_encrypted = [
+    reference_hashed = [
         hash_tokens(chapter, hash_len=hash_len) for chapter in reference_chapters
     ]
 
@@ -123,8 +123,8 @@ def main(
         progress.set_description(strat)
 
         t0 = time.process_time()
-        decrypted_tokens = align_tokens(
-            reference_encrypted,
+        aligned_tokens = align_tokens(
+            reference_hashed,
             user_chapters,
             hash_len=hash_len,
             alignment_plugins=strat_plugins,
@@ -133,15 +133,15 @@ def main(
 
         reference_tokens = list(flatten(reference_chapters))
         setup_name = f"s={strat}.e=Moby_Dick,MD-1988"
-        record_decryption_metrics_(
+        record_alignment_metrics_(
             _run,
             setup_name,
             reference_tokens,
-            decrypted_tokens,
+            aligned_tokens,
             t1 - t0,
             ref_tags=list(flatten(reference_tags)),
         )
-        all_errors[strat] = errors(reference_tokens, decrypted_tokens)
+        all_errors[strat] = errors(reference_tokens, aligned_tokens)
 
         progress.update()
 

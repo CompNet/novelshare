@@ -397,9 +397,7 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--output-file", type=str, help="Output CoNLL-2002 file.")
     args = parser.parse_args()
 
-    hashed_tokens, tags = load_conll2002_bio(
-        args.encrypted_file, separator=args.separator
-    )
+    hashed_tokens, tags = load_conll2002_bio(args.input_file, separator=args.separator)
     user_tokens = load_user_tokens(args.user_file)
-    aligned_tokens = align_tokens(hashed_tokens, tags, user_tokens)
+    aligned_tokens = align_tokens(hashed_tokens, user_tokens)
     dump_conll2002_bio(aligned_tokens, tags, args.output_file, args.separator)

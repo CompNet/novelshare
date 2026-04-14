@@ -33,5 +33,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     tokens, tags = load_conll2002_bio(args.input_file, separator=args.separator)
-    encrypted_tokens = hash_tokens(tokens)
-    dump_conll2002_bio(encrypted_tokens, tags, args.output_file, args.separator)
+    hashed_tokens = hash_tokens(tokens)
+    dump_conll2002_bio(hashed_tokens, tags, args.output_file, args.separator)
