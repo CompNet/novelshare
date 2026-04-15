@@ -28,6 +28,7 @@ from novelties_bookshare.experiments.metrics import (
     errors_percent,
     entity_errors_nb,
     entity_errors_percent,
+    log_ner_task_metrics_,
 )
 from novelties_bookshare.experiments.errors import (
     substitute,
@@ -74,7 +75,7 @@ class Document:
         pass
 
 
-CorpusID = Literal["3novels", "conll2003"]
+CorpusID = Literal["3novels", "conll2003", "wnut2017"]
 
 
 class Conll2003Document(Document):
@@ -96,22 +97,17 @@ class Conll2003Document(Document):
         assert not self.annotations is None
         ref_tokens = list(flatten(self.chapters))
         ref_tags = [self.ID2LABEL[tag_id] for tag_id in flatten(self.annotations)]
-        _run.log_scalar(
-            f"{setup_name}.entity_errors_nb_lenient",
-            entity_errors_nb(ref_tokens, aligned_tokens, ref_tags, "lenient"),
-        )
-        _run.log_scalar(
-            f"{setup_name}.entity_errors_percent_lenient",
-            entity_errors_percent(ref_tokens, aligned_tokens, ref_tags, "lenient"),
-        )
-        _run.log_scalar(
-            f"{setup_name}.entity_errors_nb_strict",
-            entity_errors_nb(ref_tokens, aligned_tokens, ref_tags, "strict"),
-        )
-        _run.log_scalar(
-            f"{setup_name}.entity_errors_percent_strict",
-            entity_errors_percent(ref_tokens, aligned_tokens, ref_tags, "strict"),
-        )
+        log_ner_task_metrics_(_run, setup_name, ref_tokens, ref_tags, aligned_tokens)
+
+
+class WNUT2017Document(Document):
+    def log_alignment_task_metrics(
+        self, _run: Run, setup_name: str, aligned_tokens: list[str]
+    ):
+        assert not self.annotations is None
+        ref_tokens = list(flatten(self.chapters))
+        ref_tags = list(flatten(self.annotations))
+        log_ner_task_metrics_(_run, setup_name, ref_tokens, ref_tags, aligned_tokens)
 
 
 def load_corpus(name: CorpusID, **kwargs) -> list[Document]:
@@ -139,6 +135,16 @@ def load_corpus(name: CorpusID, **kwargs) -> list[Document]:
                 split,
                 [row["tokens"] for row in conll2003[split]],
                 annotations=[row["ner_tags"] for row in conll2003[split]],
+            )
+            for split in ["train", "validation", "test"]
+        ]
+    elif name == "wnut2017":
+        wnut2017 = hf_load_dataset("extraordinarylab/wnut2017")
+        return [
+            WNUT2017Document(
+                split,
+                [row["tokens"] for row in wnut2017[split]],
+                annotations=[row["ner_tags"] for row in wnut2017[split]],
             )
             for split in ["train", "validation", "test"]
         ]

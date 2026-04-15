@@ -20,7 +20,7 @@ from novelties_bookshare.experiments.data import (
     normalize_,
     EDITION_SETS,
 )
-from novelties_bookshare.experiments.metrics import record_alignment_metrics_, errors
+from novelties_bookshare.experiments.metrics import log_alignment_metrics_, errors
 
 ex = Experiment()
 ex.captured_out_filter = apply_backspaces_and_linefeeds  # type: ignore
@@ -131,7 +131,7 @@ def main(
 
             reference_tokens = list(flatten(reference_chapters))
             setup_name = f"s={strat}.e={novel},{edition}"
-            record_alignment_metrics_(
+            log_alignment_metrics_(
                 _run,
                 setup_name,
                 reference_tokens,

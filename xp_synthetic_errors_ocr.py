@@ -21,7 +21,7 @@ from novelties_bookshare.align import (
     make_plugin_case,
 )
 from novelties_bookshare.experiments.data import iter_book_chapters, load_book
-from novelties_bookshare.experiments.metrics import record_alignment_metrics_
+from novelties_bookshare.experiments.metrics import log_alignment_metrics_
 from novelties_bookshare.experiments.errors import ocr_scramble
 
 ex = Experiment()
@@ -152,7 +152,7 @@ def main(
             gold_tokens = list(flatten(gold_chapters))
             book_path, strategy, (wer, cer) = setups[job_i]
             setup_name = f"b={book_path.name}.s={strategy.name}.n=ocr_scramble"
-            record_alignment_metrics_(
+            log_alignment_metrics_(
                 _run, setup_name, gold_tokens, aligned_tokens, duration_s
             )
             progress.update()

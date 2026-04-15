@@ -75,7 +75,32 @@ def errors(ref_tokens: list[str], pred_tokens: list[str]) -> dict[str, list[str]
     return error_dict
 
 
-def record_alignment_metrics_(
+def log_ner_task_metrics_(
+    _run: Run,
+    setup_name: str,
+    ref_tokens: list[str],
+    ref_tags: list[str],
+    pred_tokens: list[str],
+):
+    _run.log_scalar(
+        f"{setup_name}.entity_errors_nb_lenient",
+        entity_errors_nb(ref_tokens, pred_tokens, ref_tags, "lenient"),
+    )
+    _run.log_scalar(
+        f"{setup_name}.entity_errors_percent_lenient",
+        entity_errors_percent(ref_tokens, pred_tokens, ref_tags, "lenient"),
+    )
+    _run.log_scalar(
+        f"{setup_name}.entity_errors_nb_strict",
+        entity_errors_nb(ref_tokens, pred_tokens, ref_tags, "strict"),
+    )
+    _run.log_scalar(
+        f"{setup_name}.entity_errors_percent_strict",
+        entity_errors_percent(ref_tokens, pred_tokens, ref_tags, "strict"),
+    )
+
+
+def log_alignment_metrics_(
     _run: Run,
     setup_name: str,
     ref_tokens: list[str],
@@ -97,21 +122,6 @@ def record_alignment_metrics_(
     )
 
     if not ref_tags is None:
-        _run.log_scalar(
-            f"{setup_name}.entity_errors_nb_lenient",
-            entity_errors_nb(ref_tokens, pred_tokens, ref_tags, "lenient"),
-        )
-        _run.log_scalar(
-            f"{setup_name}.entity_errors_percent_lenient",
-            entity_errors_percent(ref_tokens, pred_tokens, ref_tags, "lenient"),
-        )
-        _run.log_scalar(
-            f"{setup_name}.entity_errors_nb_strict",
-            entity_errors_nb(ref_tokens, pred_tokens, ref_tags, "strict"),
-        )
-        _run.log_scalar(
-            f"{setup_name}.entity_errors_percent_strict",
-            entity_errors_percent(ref_tokens, pred_tokens, ref_tags, "strict"),
-        )
+        log_ner_task_metrics_(_run, setup_name, ref_tokens, ref_tags, pred_tokens)
 
     _run.log_scalar(f"{setup_name}.duration_s", duration_s)
