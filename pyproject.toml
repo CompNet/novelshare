@@ -3,7 +3,7 @@ name = "novelties-bookshare"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.9,<3.14"
+requires-python = ">=3.10,<3.14"
 dependencies = [
     "transformers>=4.51.3",
     "torch>=2.7.0",
@@ -11,6 +11,7 @@ dependencies = [
     "nltk>=3.9.1",
     "scrambledtext",
     "setuptools>=80.0.1",
+    "datasets>=4.5.0",
 ]
 
 [project.optional-dependencies]
@@ -29,7 +30,7 @@ experiments = [
     "scienceplots>=2.1.1",
     "sacred>=0.8.7",
     "joblib>=1.4.2",
-    "pandas>=2.3.0"
+    "pandas>=2.3.0",
 ]
 
 [tool.uv]

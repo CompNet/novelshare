@@ -1,9 +1,10 @@
-from typing import Callable, Literal, Optional
+from typing import Callable, Literal, Optional, Any
 import time
 import pathlib as pl
 import functools as ft
 import itertools as it
 from dataclasses import dataclass
+from datasets import load_dataset as hf_load_dataset
 from more_itertools import flatten
 from tqdm import tqdm
 import numpy as np
@@ -22,7 +23,12 @@ from novelties_bookshare.align import (
     make_plugin_case,
 )
 from novelties_bookshare.experiments.data import iter_book_chapters
-from novelties_bookshare.experiments.metrics import errors_nb, errors_percent
+from novelties_bookshare.experiments.metrics import (
+    errors_nb,
+    errors_percent,
+    entity_errors_nb,
+    entity_errors_percent,
+)
 from novelties_bookshare.experiments.errors import (
     substitute,
     delete,
@@ -56,12 +62,97 @@ class Strategy:
     align_fn: AlignFn
 
 
+@dataclass
+class Document:
+    name: str
+    chapters: list[list[str]]
+    annotations: list[list[Any]] | None = None
+
+    def log_alignment_task_metrics(
+        self, _run: Run, setup_name: str, aligned_tokens: list[str]
+    ):
+        pass
+
+
+CorpusID = Literal["3novels", "conll2003"]
+
+
+class Conll2003Document(Document):
+    ID2LABEL = {
+        0: "O",
+        1: "B-PER",
+        2: "I-PER",
+        3: "B-ORG",
+        4: "I-ORG",
+        5: "B-LOC",
+        6: "I-LOC",
+        7: "B-MISC",
+        8: "I-MISC",
+    }
+
+    def log_alignment_task_metrics(
+        self, _run: Run, setup_name: str, aligned_tokens: list[str]
+    ):
+        assert not self.annotations is None
+        ref_tokens = list(flatten(self.chapters))
+        ref_tags = [self.ID2LABEL[tag_id] for tag_id in flatten(self.annotations)]
+        _run.log_scalar(
+            f"{setup_name}.entity_errors_nb_lenient",
+            entity_errors_nb(ref_tokens, aligned_tokens, ref_tags, "lenient"),
+        )
+        _run.log_scalar(
+            f"{setup_name}.entity_errors_percent_lenient",
+            entity_errors_percent(ref_tokens, aligned_tokens, ref_tags, "lenient"),
+        )
+        _run.log_scalar(
+            f"{setup_name}.entity_errors_nb_strict",
+            entity_errors_nb(ref_tokens, aligned_tokens, ref_tags, "strict"),
+        )
+        _run.log_scalar(
+            f"{setup_name}.entity_errors_percent_strict",
+            entity_errors_percent(ref_tokens, aligned_tokens, ref_tags, "strict"),
+        )
+
+
+def load_corpus(name: CorpusID, **kwargs) -> list[Document]:
+    if name == "3novels":
+        return [
+            Document(
+                "F-1818",
+                list(iter_book_chapters("./data/Frankenstein/F-1818", **kwargs)),
+            ),
+            Document(
+                "MD-1851-US",
+                list(iter_book_chapters("./data/Moby_Dick/MD-1851-US", **kwargs)),
+            ),
+            Document(
+                "PP-1813",
+                list(
+                    iter_book_chapters("./data/Pride_and_Prejudice/PP-1813", **kwargs)
+                ),
+            ),
+        ]
+    elif name == "conll2003":
+        conll2003 = hf_load_dataset("BramVanroy/conll2003")
+        return [
+            Conll2003Document(
+                split,
+                [row["tokens"] for row in conll2003[split]],
+                annotations=[row["ner_tags"] for row in conll2003[split]],
+            )
+            for split in ["train", "validation", "test"]
+        ]
+    raise ValueError(name)
+
+
 @ex.config
 def config():
     min_error_ratio: float
     max_error_ratio: float
     error_ratio_step: float
     hash_len: int = 64
+    corpus_id: CorpusID = "3novels"
+    # only used when corpus_id == '3novels'
     chapter_limit: Optional[int] = None
     jobs_nb: int = 1
     device: Literal["auto", "cuda", "cpu"] = "auto"
@@ -74,6 +165,7 @@ def main(
     max_error_ratio: float,
     error_ratio_step: float,
     hash_len: int,
+    corpus_id: CorpusID,
     chapter_limit: Optional[int],
     jobs_nb: int,
     device: Literal["auto", "cuda", "cpu"],
@@ -83,11 +175,7 @@ def main(
     assert max_error_ratio > min_error_ratio
     assert hash_len > 0 and hash_len <= 64
 
-    corpus = [
-        pl.Path("./data/Frankenstein/F-1818/"),
-        pl.Path("./data/Moby_Dick/MD-1851-US/"),
-        pl.Path("./data/Pride_and_Prejudice/PP-1813/"),
-    ]
+    corpus = load_corpus(corpus_id, chapter_limit=chapter_limit)
 
     strategies = [
         Strategy("naive", align_tokens),
@@ -144,43 +232,44 @@ def main(
 
     def align_setup_test(
         job_i: int,
-        book_path: pl.Path,
+        document: Document,
         strategy: Strategy,
         errors_fn: Callable[[list[str], int], list[str]],
         error_ratio: float,
-    ) -> tuple[int, list[list[str]], list[str], float]:
+    ) -> tuple[int, list[str], float]:
         t0 = time.process_time()
-        chapters = list(iter_book_chapters(book_path, chapter_limit=chapter_limit))
         hashed_chapters = [
-            hash_tokens(chapter, hash_len=hash_len) for chapter in chapters
+            hash_tokens(chapter, hash_len=hash_len) for chapter in document.chapters
         ]
         user_chapters = [
-            errors_fn(chapter, int(len(chapter) * error_ratio)) for chapter in chapters
+            errors_fn(chapter, int(len(chapter) * error_ratio))
+            for chapter in document.chapters
         ]
         aligned_tokens = strategy.align_fn(hashed_chapters, user_chapters, hash_len)
         t1 = time.process_time()
-        return job_i, chapters, aligned_tokens, t1 - t0
+        return job_i, aligned_tokens, t1 - t0
 
     setups = list(it.product(corpus, strategies, errors_fns, error_ratio))
     progress = tqdm(total=len(setups), ascii=True)
 
     with Parallel(n_jobs=jobs_nb, return_as="generator_unordered") as parallel:
-        for job_i, gold_chapters, aligned_tokens, duration_s in parallel(
+        for job_i, aligned_tokens, duration_s in parallel(
             delayed(align_setup_test)(i, *args) for i, args in enumerate(setups)
         ):
-            gold_tokens = list(flatten(gold_chapters))
-            book_path, strategy, errors_fn, error_ratio = setups[job_i]
-            setup_name = f"b={book_path.name}.s={strategy.name}.n={errors_fn.__name__}"
+            document, strategy, errors_fn, error_ratio = setups[job_i]
+            ref_tokens = list(flatten(document.chapters))
+            setup_name = f"b={document.name}.s={strategy.name}.n={errors_fn.__name__}"
             _run.log_scalar(
                 f"{setup_name}.errors_nb",
-                errors_nb(gold_tokens, aligned_tokens),
+                errors_nb(ref_tokens, aligned_tokens),
                 step=error_ratio,
             )
             _run.log_scalar(
                 f"{setup_name}.errors_percent",
-                errors_percent(gold_tokens, aligned_tokens),
+                errors_percent(ref_tokens, aligned_tokens),
                 step=error_ratio,
             )
             _run.log_scalar(f"{setup_name}.duration_s", duration_s)
+            document.log_alignment_task_metrics(_run, setup_name, aligned_tokens)
 
             progress.update()

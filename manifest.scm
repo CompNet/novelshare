@@ -3,6 +3,7 @@
   "python"
   "python-pytorch"
   "python-transformers"
+  "python-datasets"
   "python-more-itertools"
   "python-nltk"
   "python-setuptools"
