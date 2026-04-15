@@ -41,12 +41,16 @@ python xp_synthetic_errors.py\
         jobs_nb=2\
         device=cuda
 
+# explanation for WER/CER values: we refer to Figure 3 of the
+# supplementary materials of the scrambledtext paper (Bourne
+# 2025). Our WER/CER grid visually follows the typical values
+# presented for the BLN600, CA and SMH datasets.
 python xp_synthetic_errors_ocr.py\
         --id="xp_synthetic_errors_ocr_h=2"\
         with\
         hash_len=2\
-        wer_grid='[0.0, 0.6, 0.6, 0.6, 0.6]'\
-        cer_grid='[0.0, 0.05, 0.1, 0.15, 0.2]'\
+        wer_grid='[0.0, 0.1,   0.2,  0.3,   0.4,  0.5,  0.6,   0.7]'\
+        cer_grid='[0.0, 0.025, 0.05, 0.075, 0.10, 0.15, 0.175, 0.25]'\
         jobs_nb=2\
         device=cuda
            
