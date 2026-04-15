@@ -197,7 +197,7 @@ def main(
             ft.partial(
                 align_tokens,
                 alignment_plugins=[
-                    make_plugin_retokenize(max_token_len=24, max_splits_nb=4)
+                    make_plugin_retokenize(max_token_len=16, max_splits_nb=8)
                 ],
             ),
         ),
@@ -217,12 +217,12 @@ def main(
             ft.partial(
                 align_tokens,
                 alignment_plugins=[
-                    make_plugin_propagate(),
-                    make_plugin_case(),
-                    make_plugin_retokenize(max_token_len=24, max_splits_nb=4),
+                    make_plugin_retokenize(max_token_len=16, max_splits_nb=8),
                     make_plugin_mlm(
                         "answerdotai/ModernBERT-base", window=16, device=device
                     ),
+                    make_plugin_case(),
+                    make_plugin_propagate(),
                 ],
             ),
         ),
