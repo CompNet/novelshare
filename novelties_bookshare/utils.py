@@ -115,3 +115,16 @@ def ner_entities(
         )
 
     return entities
+
+
+@dataclass(frozen=True)
+class CorefMention:
+    start: int
+    end: int
+    chain_id: int
+
+
+def flattened_coref_mentions(
+    token_mentions: list[list[CorefMention]],
+) -> set[CorefMention]:
+    return set([mention for mentions in token_mentions for mention in mentions])

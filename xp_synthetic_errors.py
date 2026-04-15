@@ -1,10 +1,11 @@
+from __future__ import annotations
 from typing import Callable, Literal, Optional, Any
 import time
 import pathlib as pl
 import functools as ft
 import itertools as it
 from dataclasses import dataclass
-from datasets import load_dataset as hf_load_dataset
+from datasets import load_dataset as hf_load_dataset, VerificationMode
 from more_itertools import flatten
 from tqdm import tqdm
 import numpy as np
@@ -29,6 +30,7 @@ from novelties_bookshare.experiments.metrics import (
     entity_errors_nb,
     entity_errors_percent,
     log_ner_task_metrics_,
+    log_coref_task_metrics_,
 )
 from novelties_bookshare.experiments.errors import (
     substitute,
@@ -37,6 +39,7 @@ from novelties_bookshare.experiments.errors import (
     token_split,
     token_merge,
 )
+from novelties_bookshare.utils import CorefMention
 
 ex = Experiment()
 ex.captured_out_filter = apply_backspaces_and_linefeeds  # type: ignore
@@ -110,6 +113,40 @@ class WNUT2017Document(Document):
         log_ner_task_metrics_(_run, setup_name, ref_tokens, ref_tags, aligned_tokens)
 
 
+class CoreferenceDocument(Document):
+    @staticmethod
+    def from_coref_data(
+        name: str, sentences: list[list[str]], coref_chains: list[list[list[int]]]
+    ) -> "CoreferenceDocument":
+        tokens = [token for sent in sentences for token in sent]
+
+        # in the case of coreference resolution, an annotation consist
+        # in a list of Mention the tokens is part of.
+        annotations = [[] for _ in tokens]
+        sent_start = list(
+            it.accumulate([0] + [len(sent) for sent in sentences], lambda x, y: x + y)
+        )
+        for chain_id, chain in enumerate(coref_chains):
+            for sent_i, start, end in chain:
+                token_start = sent_start[sent_i] + start
+                token_end = sent_start[sent_i] + end
+                for token_i in range(token_start, token_end + 1):
+                    annotations[token_i].append(
+                        CorefMention(token_start, token_end, chain_id)
+                    )
+
+        return CoreferenceDocument(name, [tokens], [annotations])
+
+    def log_alignment_task_metrics(
+        self, _run: Run, setup_name: str, aligned_tokens: list[str]
+    ):
+        assert not self.annotations is None
+        ref_tokens = list(flatten(self.chapters))
+        log_coref_task_metrics_(
+            _run, setup_name, ref_tokens, self.annotations, aligned_tokens
+        )
+
+
 def load_corpus(name: CorpusID, **kwargs) -> list[Document]:
     if name == "3novels":
         return [
@@ -129,7 +166,11 @@ def load_corpus(name: CorpusID, **kwargs) -> list[Document]:
             ),
         ]
     elif name == "conll2003":
-        conll2003 = hf_load_dataset("BramVanroy/conll2003")
+        conll2003 = hf_load_dataset(
+            "BramVanroy/conll2003",
+            revision="4ffbd53d9e0b92b473b9b7dcff12f53e7c17ce0c",
+            verification_mode=VerificationMode.ALL_CHECKS,
+        )
         return [
             Conll2003Document(
                 split,
@@ -139,7 +180,11 @@ def load_corpus(name: CorpusID, **kwargs) -> list[Document]:
             for split in ["train", "validation", "test"]
         ]
     elif name == "wnut2017":
-        wnut2017 = hf_load_dataset("extraordinarylab/wnut2017")
+        wnut2017 = hf_load_dataset(
+            "extraordinarylab/wnut2017",
+            revision="a2495caff3e288bd7640cbdba313dc76a75c5c4a",
+            verification_mode=VerificationMode.ALL_CHECKS,
+        )
         return [
             WNUT2017Document(
                 split,
@@ -147,6 +192,20 @@ def load_corpus(name: CorpusID, **kwargs) -> list[Document]:
                 annotations=[row["ner_tags"] for row in wnut2017[split]],
             )
             for split in ["train", "validation", "test"]
+        ]
+    elif name == "litbank":
+        litbank = hf_load_dataset(
+            "coref-data/litbank_raw",
+            "split_0",
+            revision="14cac705d08a68f1df8eb197b57a9f98ae920e54",
+            verification_mode=VerificationMode.ALL_CHECKS,
+        )
+        return [
+            CoreferenceDocument.from_coref_data(
+                row["doc_name"], row["sentences"], row["coref_chains"]
+            )
+            for split in ["train", "validation", "test"]
+            for row in litbank[split]
         ]
     raise ValueError(name)
 
