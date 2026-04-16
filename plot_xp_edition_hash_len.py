@@ -7,7 +7,10 @@ import scienceplots
 import pandas as pd
 from more_itertools import windowed
 from plot_xp_edition import get_params, METRIC_TO_YLABEL, XP_PARAMS_KEY
-from novelties_bookshare.experiments.plot_utils import MARKERS, STRAT_COLOR_HINTS
+from novelties_bookshare.experiments.plot_utils import (
+    STRAT_MARKERS_HINT,
+    STRAT_COLOR_HINTS,
+)
 
 METRIC_TO_YFORMATTER = {
     "errors_percent": mtick.PercentFormatter(1.0),
@@ -82,7 +85,7 @@ if __name__ == "__main__":
             x="x",
             y=args.metric,
             label="\\texttt{{{0}}}".format(strat),
-            marker=MARKERS[i],
+            marker=STRAT_MARKERS_HINT[strat],
             linewidth=1,
             markersize=4,
             alpha=0.75,

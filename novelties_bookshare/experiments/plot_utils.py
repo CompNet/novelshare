@@ -11,6 +11,17 @@ def by_strat(strat: str) -> int:
         return -1
 
 
+# NOTE: split is deprecated for "retokenize"
+STRAT_MARKERS_HINT = {
+    "naive": ".",
+    "case": "v",
+    "retokenize": "*",
+    "split": "*",
+    "mlm": "X",
+    "propagate": "d",
+    "pipe": "h",
+}
+
 # from
 # https://github.com/garrettj403/SciencePlots/blob/master/src/scienceplots/styles/science.mplstyle
 STRAT_COLOR_HINTS = {

@@ -7,7 +7,11 @@ import numpy as np
 import scienceplots
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
-from novelties_bookshare.experiments.plot_utils import MARKERS, STRAT_COLOR_HINTS
+from novelties_bookshare.experiments.plot_utils import (
+    MARKERS,
+    STRAT_MARKERS_HINT,
+    STRAT_COLOR_HINTS,
+)
 
 
 @ft.lru_cache
@@ -172,7 +176,7 @@ if __name__ == "__main__":
     # # one subplot per "noise"
     # pick "book" to split curves
     for strat in set(df["strat"]):
-        noises = list(set(df["noise"]))
+        noises = sorted(set(df["noise"]))
         fig, axs = plt.subplots(
             math.ceil(len(noises) / cols_nb), cols_nb, figsize=(16, 6)
         )
@@ -207,7 +211,7 @@ if __name__ == "__main__":
 
     # pick "strat" to split curves
     for book in set(df["book"]):
-        noises = list(set(df["noise"]))
+        noises = sorted(set(df["noise"]))
         fig, axs = plt.subplots(
             math.ceil(len(noises) / cols_nb), cols_nb, figsize=(16, 8)
         )
@@ -222,7 +226,7 @@ if __name__ == "__main__":
                     y="values",
                     title="\\texttt{{{0}}}".format(noise),
                     label="\\texttt{{{0}}}".format(strat),
-                    marker=MARKERS[j],
+                    marker=STRAT_MARKERS_HINT[strat],
                     markersize=12 - j,
                     alpha=0.75,
                     c=STRAT_COLOR_HINTS[strat],
@@ -244,7 +248,7 @@ if __name__ == "__main__":
     plt.close("all")
 
     # pick "strat" to split curves and average over books
-    noises = list(set(df["noise"]))
+    noises = sorted(set(df["noise"]))
     fig, axs = plt.subplots(math.ceil(len(noises) / cols_nb), cols_nb, figsize=(16, 8))
     df_book_avg = df.copy()
     # groupby can't handle a mix of floats and tuples
@@ -264,7 +268,7 @@ if __name__ == "__main__":
                 y="values",
                 title="\\texttt{{{0}}}".format(noise),
                 label="\\texttt{{{0}}}".format(strat),
-                marker=MARKERS[j],
+                marker=STRAT_MARKERS_HINT[strat],
                 markersize=12 - j,
                 alpha=0.75,
                 c=STRAT_COLOR_HINTS[strat],
