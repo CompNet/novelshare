@@ -146,6 +146,15 @@ class CoreferenceDocument(Document):
     def from_coref_data(
         name: str, sentences: list[list[str]], coref_chains: list[list[list[int]]]
     ) -> "CoreferenceDocument":
+        """Create a :class:`.CoreferenceDocument` from a huggingface
+        coref-data dataset.
+
+        :param: a list of sentences
+
+        :param coref_chains: a list of coreference cluster.  Each
+            cluster contains mentions of the form [sentence_index,
+            start, end]
+        """
         tokens = [token for sent in sentences for token in sent]
 
         # in the case of coreference resolution, an annotation consist
@@ -159,18 +168,57 @@ class CoreferenceDocument(Document):
                 token_start = sent_start[sent_i] + start
                 token_end = sent_start[sent_i] + end
                 for token_i in range(token_start, token_end + 1):
-                    annotations[token_i].append(
-                        CorefMention(token_start, token_end, chain_id)
-                    )
+                    try:
+                        annotations[token_i].append(
+                            CorefMention(token_start, token_end, chain_id)
+                        )
+                    except IndexError:
+                        # we observe rare cases where the dataset adds
+                        # indices outside of the text
+                        pass
 
         return CoreferenceDocument(name, [tokens], [annotations])
+
+    @staticmethod
+    def concat(docs: list["CoreferenceDocument"], name: str) -> "CoreferenceDocument":
+        """
+        Concatenate a list of CoreferenceDocument.  Each passed
+        coreference document will be a chapter in the new created
+        document.
+        """
+        return CoreferenceDocument(
+            name,
+            [list(flatten(doc.chapters)) for doc in docs],
+            [list(flatten(doc.annotations)) for doc in docs],  # type: ignore
+        )
 
     def log_alignment_task_metrics(
         self, _run: Run, setup_name: str, aligned_tokens: list[str]
     ):
         assert not self.annotations is None
-        ref_tokens = list(flatten(self.chapters))
-        ref_annotations = list(flatten(self.annotations))
+
+        ref_tokens = []
+        ref_annotations = []
+        token_count = 0
+        last_chain_id = 0
+        for tokens, annotations in zip(self.chapters, self.annotations):
+            ref_annotations += [
+                [
+                    CorefMention(
+                        m.start + token_count,
+                        m.end + token_count,
+                        m.chain_id + last_chain_id,
+                    )
+                    for m in token_mentions
+                ]
+                for token_mentions in annotations
+            ]
+            ref_tokens += tokens
+            token_count += len(tokens)
+            last_chain_id = max(
+                [m.chain_id for token_mentions in annotations for m in token_mentions]
+            )
+
         log_coref_task_metrics_(
             _run, setup_name, ref_tokens, ref_annotations, aligned_tokens
         )
@@ -194,6 +242,7 @@ def load_corpus(name: CorpusID, **kwargs) -> list[Document]:
                 ),
             ),
         ]
+
     elif name == "conll2003":
         conll2003 = hf_load_dataset(
             "BramVanroy/conll2003",
@@ -208,6 +257,7 @@ def load_corpus(name: CorpusID, **kwargs) -> list[Document]:
             )
             for split in ["train", "validation", "test"]
         ]
+
     elif name == "wnut2017":
         wnut2017 = hf_load_dataset(
             "extraordinarylab/wnut2017",
@@ -222,6 +272,7 @@ def load_corpus(name: CorpusID, **kwargs) -> list[Document]:
             )
             for split in ["train", "validation", "test"]
         ]
+
     elif name == "litbank":
         litbank = hf_load_dataset(
             "coref-data/litbank_raw",
@@ -236,4 +287,28 @@ def load_corpus(name: CorpusID, **kwargs) -> list[Document]:
             for split in ["train", "validation", "test"]
             for row in litbank[split]
         ]
+
+    elif name == "preco":
+        preco = hf_load_dataset(
+            "coref-data/preco_raw",
+            revision="02c8ffedb9d0b49168809a572ff553c2f6f9f7ca",
+            verification_mode=VerificationMode.ALL_CHECKS,
+        )
+        documents = []
+        for split in ["train", "validation"]:
+            # this creates a document per preco document. However,
+            # there are ~37k documents in preco: we don't want to keep
+            # track of that many documents when logging
+            # experiments...
+            split_docs = [
+                CoreferenceDocument.from_coref_data(
+                    row["id"], row["sentences"], row["mention_clusters"]
+                )
+                for row in preco[split]
+            ]
+            # Therefore, we rather have one chapter per preco
+            # document, and one document per split.
+            documents.append(CoreferenceDocument.concat(split_docs, name=split))
+        return documents
+
     raise ValueError(name)
