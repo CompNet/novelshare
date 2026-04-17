@@ -170,6 +170,7 @@ class CoreferenceDocument(Document):
     ):
         assert not self.annotations is None
         ref_tokens = list(flatten(self.chapters))
+        ref_annotations = list(flatten(self.annotations))
         log_coref_task_metrics_(
             _run, setup_name, ref_tokens, self.annotations, aligned_tokens
         )
