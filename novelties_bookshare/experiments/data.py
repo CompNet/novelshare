@@ -106,7 +106,7 @@ class Document:
         pass
 
 
-CorpusID = Literal["3novels", "conll2003", "wnut2017", "litbank"]
+CorpusID = Literal["3novels", "conll2003", "wnut2017", "litbank", "preco"]
 
 
 class Conll2003Document(Document):
