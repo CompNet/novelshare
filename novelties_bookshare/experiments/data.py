@@ -172,7 +172,7 @@ class CoreferenceDocument(Document):
         ref_tokens = list(flatten(self.chapters))
         ref_annotations = list(flatten(self.annotations))
         log_coref_task_metrics_(
-            _run, setup_name, ref_tokens, self.annotations, aligned_tokens
+            _run, setup_name, ref_tokens, ref_annotations, aligned_tokens
         )
 
 
