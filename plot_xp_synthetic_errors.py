@@ -92,6 +92,12 @@ METRIC2PRETTY = {
     "errors_percent": "Percentage of errors",
     "entity_errors_nb": "Number of entity errors",
     "entity_errors_percent": "Percentage of entity errors",
+    "entity_errors_nb_strict": "Number of entity errors",
+    "entity_errors_percent_strict": "Percentage of entity errors",
+    "entity_errors_nb_lenient": "Number of entity errors",
+    "entity_errors_percent_lenient": "Percentage of entity errors",
+    "coref_mention_errors_nb": "Number of mentions errors",
+    "coref_mention_errors_percent": "Percentage of mention errors",
 }
 
 METRIC_TO_YFORMATTER = {"errors_percent": mtick.PercentFormatter(1.0)}
