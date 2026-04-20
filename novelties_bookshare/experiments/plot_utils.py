@@ -1,5 +1,7 @@
 MARKERS = ["X", "p", "*", "D", "^", "v", "1", "o", "s"]
 
+MARKER_PAIRS = [("P", "X"), ("s", "D"), ("^", "v"), ("<", ">")]
+
 
 def by_strat(strat: str) -> int:
     """Utility function to sort strategies in order"""
@@ -24,6 +26,14 @@ STRAT_MARKERS_HINT = {
 
 # from
 # https://github.com/garrettj403/SciencePlots/blob/master/src/scienceplots/styles/science.mplstyle
+COLORS = ["#0C5DA5", "#00B945", "#FF9500", "#FF2C00", "#845B97", "#474747"]
+
+COLOR_PAIRS = [
+    ("#0C5DA5", "#0C89A5"),
+    ("#FF2C00", "#FF9500"),
+    ("#00B945", "#00b991"),
+]
+
 STRAT_COLOR_HINTS = {
     "naive": "#0C5DA5",
     "case": "#00B945",
