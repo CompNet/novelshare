@@ -1,82 +1,13 @@
 # novelshare
 
+Are you looking to reproduce our ACL 2026 article experiments? See the [corresponding branch](https://github.com/CompNet/novelshare/tree/acl2026).
+
+Novelshare is a library that allows to share annotations of a copyrighted corpus, provided the user of the corpus has a (possibly slightly different version) of the copyrighted data.
+
 
 # Installation
 
-## uv
-
-Clone the repository and use `uv`:
-
-```sh
-uv sync
-```
-
-By default this install everything for and the cuda version of PyTorch. We have several extras to configure your installation. For development dependencies:
-
-```sh
-uv sync --dev
-```
-
-For GPU acceleration, depending on your GPU, you can use:
-
-```sh
-# if you have a cuda 12.8 compatible GPU
-uv sync --extra cu128
-# if you have a rocm 6.3 compatible GPU
-uv sync --extra rocm63
-```
-
-The `cpu` extra also exists for the cpu version of torch.
-
-To not only use the library, but also add additional dependencies to reproduce experiments, you can use the `experiments` extra:
-
-```sh
-uv sync --extra experiments
-```
-
-
-## guix
-
-We provide a more reproducible environment using `guix`:
-
-```sh
-guix time-machine -C channels.scm -- shell -C -m manifest.scm
-```
-
-
-# Reproducing Experiments
-
-After installation, activate your Python environment (`source .venv/bin/activate`). You can then reproduce experiments by launching these scripts: 
-
-| Section                                 | Experiment Collection Script       |
-|-----------------------------------------|------------------------------------|
-| 4.4 Results Per Edition                 | `./xp_edition.sh`                  |
-| 4.5 Synthetic Errors                    | `./xp_edition_synthetic_errors.sh` |
-| Appendix E/F                            | `./xp_ner.sh`                      |
-|-----------------------------------------|------------------------------------|
-| All experiments (can take a long time!) | `./all_xp.sh`                      |
-
-Each shell script launches a collection of experiments (corresponding to launching xp_*.py scripts with different parameters). Each experiment creates a directory under `./runs`.
-
-
-## Plots
-
-After running experiments, you can use the plotting scripts to reproduce the figures from the paper:
-
-| Figure    | Experiment Script                | Plot Command                                                                                                                                                                                                                                                                                                                                                 |
-|-----------|----------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Figure 4  | -                                | `python plot_hash_collisions.py -l`                                                                                                                                                                                                                                                                                                                          |
-| Figure 5  | `xp_edition.sh`                  | `python plot_xp_edition_hash_len.py -r ./runs/xp_edition_n=Frankenstein_h=* ./runs/xp_edition_n=Moby_Dick_h=* ./runs/xp_edition_n=Pride_and_Prejudice_h=* -m errors_percent -l`                                                                                                                                                                              |
-| Figure 6  | `xp_edition.sh`                  | `python plot_xp_edition.py -r ./runs/xp_edition_n=Frankenstein_h=2 ./runs/xp_edition_n=Moby_Dick_h=2 ./runs/xp_edition_n=Pride_and_Prejudice_h=2 -m errors_percent`                                                                                                                                                                                          |
-| Figure 7  | `xp_edition_synthetic_errors.sh` | `python plot_xp_synthetic_errors.py -m errors_percent -r ./runs/xp_synthetic_errors_h=2/ -c ./runs/xp_synthetic_errors_ocr_h=2/ -o ./plots/synthetic_errors`                                                                                                                                                                                                 |
-| Figure 8  | `xp_edition.sh`                  | `python plot_xp_edition.py -r ./runs/xp_edition_n=Frankenstein_h=2 ./runs/xp_edition_n=Moby_Dick_h=2 ./runs/xp_edition_n=Pride_and_Prejudice_h=2 -m duration_s -l`                                                                                                                                                                                           |
-| Figure 9  | `xp_ner.sh`                      | `python plot_xp_synthetic_errors.py -r ./runs/xp_synthetic_errors_c=conll2003_h=2/ -c ./runs/xp_synthetic_errors_ocr_c=conll2003_h=2/ -m errors_percent -o ./plots/synthetic_errors_conll2003`                                                                                                                                                               |
-| Figure 10 | `xp_ner.sh`                      | `python plot_xp_synthetic_errors.py -r ./runs/xp_synthetic_errors_c=wnut2017_h=2/ -c ./runs/xp_synthetic_errors_ocr_c=wnut2017_h=2/ -m errors_percent -o ./plots/synthetic_errors_wnut2017`                                                                                                                                                                  |
-| Figure 11 | `xp_ner.sh`                      | `python plot_task_specific_errors.py -r ./runs/xp_synthetic_errors_c=conll2003_h=2/ ./runs/xp_synthetic_errors_c=wnut2017_h=2/ -c ./runs/xp_synthetic_errors_ocr_c=conll2003_h=2/ ./runs/xp_synthetic_errors_ocr_c=wnut2017_h=2/ -t entity_errors_percent_strict entity_errors_percent_strict -m errors_percent errors_percent  -l 'CoNLL 2003' 'WNUT 2017'` |
-| Figure 12 | `xp_edition.sh`                  | `python plot_xp_edition.py -r ./runs/xp_edition_mlm_params_n=* -m errors_percent`                                                                                                                                                                                                                                                                            |
-| Figure 13 | `xp_edition.sh`                  | `python plot_xp_edition.py -r ./runs/xp_edition_n=*_h=2 -m precision_errors_nb -l`                                                                                                                                                                                                                                                                           |
-
-For all plotting scripts, you can use `--help` for more details. 
+Currently, novelshare is not on PyPi, but you can install it directly from GitHub with `pip install 'git+https://github.com/CompNet/novelshare/tree/master'`.
 
 
 # Library user guide
@@ -186,6 +117,58 @@ aligned = align_tokens(hashed_chapters, my_chapters, hash_len=2)
 ```
 
 
-# Tests
+# Development setup
+
+## uv (preferred)
+
+Clone the repository and use `uv`:
+
+```sh
+uv sync
+```
+
+By default this install everything for and the cuda version of PyTorch. We have several extras to configure your installation. For development dependencies:
+
+```sh
+uv sync --dev
+```
+
+For GPU acceleration, depending on your GPU, you can use:
+
+```sh
+# if you have a cuda 12.8 compatible GPU
+uv sync --extra cu128
+# if you have a rocm 6.3 compatible GPU
+uv sync --extra rocm63
+```
+
+The `cpu` extra also exists for the cpu version of torch.
+
+
+## guix
+
+We provide a reproducible environment with `guix`:
+
+```sh
+guix time-machine -C channels.scm -- shell -C -m manifest.scm
+```
+
+
+## Tests
 
 We use pytest for testing, so you can run tests with `python -m pytest tests`.
+
+
+
+# Citation
+
+If you use novelshare in your research, please cite:
+
+```bibtex
+@InProceedings{Amalvy2026,
+    author = {Amalvy, A. and Labatut, V. and Bost, X. and Huang, H.-H.},
+    title = {Overcoming Copyright Barriers in Corpus Distribution Through Non-Reversible Hashing},
+    year = 2026,
+    booktitle = {64th Annual Meeting of the Association for Computational Linguistics (to appear)}, 
+}
+```

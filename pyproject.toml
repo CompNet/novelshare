@@ -25,13 +25,6 @@ rocm63 = [
 cpu = [
     "torch>=2.7.0"
 ]
-experiments = [
-    "matplotlib>=3.9.4",
-    "scienceplots>=2.1.1",
-    "sacred>=0.8.7",
-    "joblib>=1.4.2",
-    "pandas>=2.3.0",
-]
 
 [tool.uv]
 conflicts = [
