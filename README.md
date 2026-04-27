@@ -96,7 +96,7 @@ my_tokens, my_annotations = load_my_corpus()
 hashed_tokens = hash_tokens(my_tokens, hash_len=2)
 
 with open("hashed_corpus.conll", "w") as f:
-    for token, annotations in hashed_tokens, my_annotations:
+    for token, annotations in zip(hashed_tokens, my_annotations):
         f.write(f"{token} {annotations}\n")
 ```
 
@@ -116,7 +116,7 @@ my_tokens = load_my_tokens()
 hashed_tokens = load_hashed_tokens()
 annotations = load_annotations()
 # each token has one or more annotations
-assert len(source_tokens) == len(source_annotations)
+assert len(hashed_tokens) == len(annotations)
 
 # you can align your tokens to annotations using align_tokens!
 aligned_tokens = align_tokens(hashed_tokens, my_tokens, hash_len=2)
@@ -128,7 +128,7 @@ The more the user tokens differ from the source tokens, the more errors will occ
 ```python
 from novelshare.align import (
     make_plugin_propagate,
-    make_pluging_mlm,
+    make_plugin_mlm,
     make_plugin_retokenize,
     make_plugin_case,
 )
@@ -138,7 +138,7 @@ aligned = align_tokens(
     hashed_tokens,
     my_tokens,
     hash_len=2,
-    alignion_plugins=[make_plugin_propagate()],
+    alignnment_plugins=[make_plugin_propagate()],
 )
 
 # Option #2: heavier but more powerful, using a sequence of plugins
@@ -146,7 +146,7 @@ aligned = align_tokens(
     hashed_tokens,
     my_tokens,
     hash_len=2,
-    alignion_plugins=[
+    alignment_plugins=[
         make_plugin_propagate(),
         make_plugin_case(),
         make_plugin_retokenize(max_token_len=16, max_splits_nb=8),
@@ -159,7 +159,7 @@ aligned = align_tokens(
     hashed_tokens,
     my_tokens,
     hash_len=2,
-    alignion_plugins=[
+    alignment_plugins=[
         make_plugin_propagate(),
         make_plugin_case(),
         make_plugin_retokenize(max_token_len=16, max_splits_nb=8),
@@ -177,7 +177,7 @@ from typing import Any
 from novelshare.align import align_tokens
 
 hashed_chapters: list[list[str]] = load_chapters()
-annotations list[list[Any]] = load_annotations()
+annotations: list[list[Any]] = load_annotations()
 
 my_chapters: list[list[str]] = load_my_chapters()
 
