@@ -46,17 +46,22 @@ guix time-machine -C channels.scm -- shell -C -m manifest.scm
 
 # Reproducing Experiments
 
-After installation, activate your Python environment (`source .venv/bin/activate`). You can then reproduce experiments by launching the individual experiment files. Each experiment creates a directory in the `runs` folder.
+After installation, activate your Python environment (`source .venv/bin/activate`). You can then reproduce experiments by launching these scripts: 
 
-| Section                 | Experiment Script                  |
-|-------------------------|------------------------------------|
-| 4.4 Results Per Edition | `./xp_edition.sh`                  |
-| 4.5 Synthetic Errors    | `./xp_edition_synthetic_errors.sh` |
-| Appendix E/F            | `./xp_ner.sh`                      |
+| Section                                 | Experiment Collection Script       |
+|-----------------------------------------|------------------------------------|
+| 4.4 Results Per Edition                 | `./xp_edition.sh`                  |
+| 4.5 Synthetic Errors                    | `./xp_edition_synthetic_errors.sh` |
+| Appendix E/F                            | `./xp_ner.sh`                      |
+|-----------------------------------------|------------------------------------|
+| All experiments (can take a long time!) | `./all_xp.sh`                      |
 
-Alternatively, the `./all_xp.sh` script launches all experiments (this can take a very long time!).
+Each shell script launches a collection of experiments (corresponding to launching xp_*.py scripts with different parameters). Each experiment creates a directory under `./runs`.
 
-After running the experiments, you can then use the plotting scripts to reproduce the figures from the paper:
+
+## Plots
+
+After running experiments, you can use the plotting scripts to reproduce the figures from the paper:
 
 | Figure    | Experiment Script                | Plot Command                                                                                                                                                                                                                                                                                                                                                 |
 |-----------|----------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
