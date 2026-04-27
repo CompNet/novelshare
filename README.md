@@ -46,27 +46,32 @@ guix time-machine -C channels.scm -- shell -C -m manifest.scm
 
 # Reproducing Experiments
 
-After installation, activate your Python environment and start the experiments script:
+After installation, activate your Python environment (`source .venv/bin/activate`). You can then reproduce experiments by launching the individual experiment files. Each experiment creates a directory in the `runs` folder.
 
-```sh
-source .venv/bin/activate
-./all_xp.sh
-```
+| Section                 | Experiment Script                  |
+|-------------------------|------------------------------------|
+| 4.4 Results Per Edition | `./xp_edition.sh`                  |
+| 4.5 Synthetic Errors    | `./xp_edition_synthetic_errors.sh` |
+| Appendix E/F            | `./xp_ner.sh`                      |
 
-This will create directories in the `runs` folder. You can then use the plotting scripts to reproduce the figures from the paper:
+Alternatively, the `./all_xp.sh` script launches all experiments (this can take a very long time!).
 
-| Figure    | Command                                                                                                                                                                         |
-|-----------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Figure 4  | `python plot_hash_collisions.py -l`                                                                                                                                             |
-| Figure 5  | `python plot_xp_edition_hash_len.py -r ./runs/xp_edition_n=Frankenstein_h=* ./runs/xp_edition_n=Moby_Dick_h=* ./runs/xp_edition_n=Pride_and_Prejudice_h=* -m errors_percent -l` |
-| Figure 6  | `python plot_xp_edition.py -r ./runs/xp_edition_n=Frankenstein_h=2 ./runs/xp_edition_n=Moby_Dick_h=2 ./runs/xp_edition_n=Pride_and_Prejudice_h=2 -m errors_percent`             |
-| Figure 7  | `python plot_xp_synthetic_errors.py -m errors_percent -r ./runs/xp_synthetic_errors_h=2/ -c ./runs/xp_synthetic_errors_ocr_h=2/ -x '(0.0,0.1)' -o ./plots`                      |
-| Figure 8  | `python plot_xp_edition.py -r ./runs/xp_edition_n=Frankenstein_h=2 ./runs/xp_edition_n=Moby_Dick_h=2 ./runs/xp_edition_n=Pride_and_Prejudice_h=2 -m duration_s -l`              |
-| Figure 9  | `python plot_xp_edition.py -r ./runs/xp_edition_mlm_params_n=* -m errors_nb`                                                                                                    |
-| Figure 10 | `python plot_xp_edition.py -r ./runs/xp_edition_propagate_order_n=* -m precision_errors_nb -l`                                                                                  |
+After running the experiments, you can then use the plotting scripts to reproduce the figures from the paper:
 
-For all scripts, you can use `--help` for more details.
+| Figure    | Experiment Script                | Plot Command                                                                                                                                                                                                                                                                                                                                                 |
+|-----------|----------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Figure 4  | -                                | `python plot_hash_collisions.py -l`                                                                                                                                                                                                                                                                                                                          |
+| Figure 5  | `xp_edition.sh`                  | `python plot_xp_edition_hash_len.py -r ./runs/xp_edition_n=Frankenstein_h=* ./runs/xp_edition_n=Moby_Dick_h=* ./runs/xp_edition_n=Pride_and_Prejudice_h=* -m errors_percent -l`                                                                                                                                                                              |
+| Figure 6  | `xp_edition.sh`                  | `python plot_xp_edition.py -r ./runs/xp_edition_n=Frankenstein_h=2 ./runs/xp_edition_n=Moby_Dick_h=2 ./runs/xp_edition_n=Pride_and_Prejudice_h=2 -m errors_percent`                                                                                                                                                                                          |
+| Figure 7  | `xp_edition_synthetic_errors.sh` | `python plot_xp_synthetic_errors.py -m errors_percent -r ./runs/xp_synthetic_errors_h=2/ -c ./runs/xp_synthetic_errors_ocr_h=2/ -o ./plots/synthetic_errors`                                                                                                                                                                                                 |
+| Figure 8  | `xp_edition.sh`                  | `python plot_xp_edition.py -r ./runs/xp_edition_n=Frankenstein_h=2 ./runs/xp_edition_n=Moby_Dick_h=2 ./runs/xp_edition_n=Pride_and_Prejudice_h=2 -m duration_s -l`                                                                                                                                                                                           |
+| Figure 9  | `xp_ner.sh`                      | `python plot_xp_synthetic_errors.py -r ./runs/xp_synthetic_errors_c=conll2003_h=2/ -c ./runs/xp_synthetic_errors_ocr_c=conll2003_h=2/ -m errors_percent -o ./plots/synthetic_errors_conll2003`                                                                                                                                                               |
+| Figure 10 | `xp_ner.sh`                      | `python plot_xp_synthetic_errors.py -r ./runs/xp_synthetic_errors_c=wnut2017_h=2/ -c ./runs/xp_synthetic_errors_ocr_c=wnut2017_h=2/ -m errors_percent -o ./plots/synthetic_errors_wnut2017`                                                                                                                                                                  |
+| Figure 11 | `xp_ner.sh`                      | `python plot_task_specific_errors.py -r ./runs/xp_synthetic_errors_c=conll2003_h=2/ ./runs/xp_synthetic_errors_c=wnut2017_h=2/ -c ./runs/xp_synthetic_errors_ocr_c=conll2003_h=2/ ./runs/xp_synthetic_errors_ocr_c=wnut2017_h=2/ -t entity_errors_percent_strict entity_errors_percent_strict -m errors_percent errors_percent  -l 'CoNLL 2003' 'WNUT 2017'` |
+| Figure 12 | `xp_edition.sh`                  | `python plot_xp_edition.py -r ./runs/xp_edition_mlm_params_n=* -m errors_percent`                                                                                                                                                                                                                                                                            |
+| Figure 13 | `xp_edition.sh`                  | `python plot_xp_edition.py -r ./runs/xp_edition_n=*_h=2 -m precision_errors_nb -l`                                                                                                                                                                                                                                                                           |
 
+For all plotting scripts, you can use `--help` for more details. 
 
 
 # Library user guide
