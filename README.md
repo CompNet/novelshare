@@ -184,3 +184,8 @@ my_chapters: list[list[str]] = load_my_chapters()
 # align_tokens supports list of chunks out of the box!
 aligned = align_tokens(hashed_chapters, my_chapters, hash_len=2)
 ```
+
+
+# Tests
+
+We use pytest for testing, so you can run tests with `python -m pytest tests`.
