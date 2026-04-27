@@ -7,14 +7,14 @@ from sacred.commands import print_config
 from sacred.run import Run
 from sacred.utils import apply_backspaces_and_linefeeds
 from tqdm import tqdm
-from novelties_bookshare.hash import hash_tokens
-from novelties_bookshare.align import align_tokens, make_plugin_mlm
-from novelties_bookshare.experiments.data import (
+from novelshare.hash import hash_tokens
+from novelshare.align import align_tokens, make_plugin_mlm
+from novelshare.experiments.data import (
     iter_book_chapters,
     normalize_,
     EDITION_SETS,
 )
-from novelties_bookshare.experiments.metrics import log_alignment_metrics_
+from novelshare.experiments.metrics import log_alignment_metrics_
 
 ex = Experiment()
 ex.captured_out_filter = apply_backspaces_and_linefeeds  # type: ignore

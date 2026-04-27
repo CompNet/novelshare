@@ -1,4 +1,4 @@
-from novelties_bookshare.experiments.errors import (
+from novelshare.experiments.errors import (
     substitute,
     delete,
     add,

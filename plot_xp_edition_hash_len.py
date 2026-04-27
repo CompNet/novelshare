@@ -7,7 +7,7 @@ import scienceplots
 import pandas as pd
 from more_itertools import windowed
 from plot_xp_edition import get_params, METRIC_TO_YLABEL, XP_PARAMS_KEY
-from novelties_bookshare.experiments.plot_utils import (
+from novelshare.experiments.plot_utils import (
     STRAT_MARKERS_HINT,
     STRAT_COLOR_HINTS,
 )

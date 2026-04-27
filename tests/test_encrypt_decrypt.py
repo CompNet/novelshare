@@ -1,13 +1,13 @@
 from hypothesis import given, strategies as st
-from novelties_bookshare.hash import hash_tokens
-from novelties_bookshare.align import (
+from novelshare.hash import hash_tokens
+from novelshare.align import (
     align_tokens,
     make_plugin_case,
     make_plugin_mlm,
     make_plugin_propagate,
     make_plugin_retokenize,
 )
-from novelties_bookshare.experiments.metrics import errors_nb
+from novelshare.experiments.metrics import errors_nb
 from tests.strategies import error_seq_pairs
 
 

@@ -1,4 +1,4 @@
-# novelties-bookshare
+# novelshare
 
 
 # Installation
@@ -74,7 +74,7 @@ For all scripts, you can use `--help` for more details.
 ## Hashing your corpus
 
 ```python
-from novelties_bookshare.hash import hash_tokens
+from novelshare.hash import hash_tokens
 
 # assuming my_tokens is a list of tokens, and my_annotations is a list
 # of single or multiple annotations (one or more annotations per
@@ -92,10 +92,10 @@ with open("hashed_corpus.conll", "w") as f:
 
 ## Aligned Annotations of a Shared Hashed Corpus
 
-Aligning tokens is done using the `novelties_bookshare.align.align_tokens` function:
+Aligning tokens is done using the `novelshare.align.align_tokens` function:
 
 ```python
-from novelties_bookshare.align import align_tokens
+from novelshare.align import align_tokens
 
 # let's suppose you wish to align your own tokens with a hashed corpus
 
@@ -116,7 +116,7 @@ assert len(aligned_tokens) == len(annotations)
 The more the user tokens differ from the source tokens, the more errors will occur in the alignment process. It is possible to use additional alignment plugins to improve performance. Here are some examples:
 
 ```python
-from novelties_bookshare.align import (
+from novelshare.align import (
     make_plugin_propagate,
     make_pluging_mlm,
     make_plugin_retokenize,
@@ -160,11 +160,11 @@ aligned = align_tokens(
 )
 ```
 
-Adding alignment plugins is, however, also increasing runtime. To reduce runtime, it is possible to take advantage of the fact that a dataset might be *chunked*. This can happen, for example, in the case of a book divided into chapters. Since `novelties-bookshare` uses `difflib` to align sequences which is O(n^2), it is usually noticeably faster to align chapters separately rather than aligning the whole document at once. The drawback is that one needs aligned chapters. `novelties-bookshare` support this usecase out of the box, as the `align_tokens` function can take a list of tokens or a list of chunks:
+Adding alignment plugins is, however, also increasing runtime. To reduce runtime, it is possible to take advantage of the fact that a dataset might be *chunked*. This can happen, for example, in the case of a book divided into chapters. Since `novelshare` uses `difflib` to align sequences which is O(n^2), it is usually noticeably faster to align chapters separately rather than aligning the whole document at once. The drawback is that one needs aligned chapters. `novelshare` support this usecase out of the box, as the `align_tokens` function can take a list of tokens or a list of chunks:
 
 ```python
 from typing import Any
-from novelties_bookshare.align import align_tokens
+from novelshare.align import align_tokens
 
 hashed_chapters: list[list[str]] = load_chapters()
 annotations list[list[Any]] = load_annotations()

@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 import scienceplots
 import pandas as pd
-from novelties_bookshare.experiments.plot_utils import (
+from novelshare.experiments.plot_utils import (
     STRAT_COLOR_HINTS,
     EDITION_COLOR_HINTS,
 )

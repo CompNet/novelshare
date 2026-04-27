@@ -12,28 +12,28 @@ from sacred.observers import FileStorageObserver
 from sacred.commands import print_config
 from sacred.run import Run
 from sacred.utils import apply_backspaces_and_linefeeds
-from novelties_bookshare.hash import hash_tokens
-from novelties_bookshare.align import (
+from novelshare.hash import hash_tokens
+from novelshare.align import (
     align_tokens,
     make_plugin_mlm,
     make_plugin_propagate,
     make_plugin_retokenize,
     make_plugin_case,
 )
-from novelties_bookshare.experiments.metrics import (
+from novelshare.experiments.metrics import (
     errors_nb,
     errors_percent,
     entity_errors_nb,
     entity_errors_percent,
 )
-from novelties_bookshare.experiments.errors import (
+from novelshare.experiments.errors import (
     substitute,
     delete,
     add,
     token_split,
     token_merge,
 )
-from novelties_bookshare.experiments.data import (
+from novelshare.experiments.data import (
     load_corpus,
     CorpusID,
     Strategy,

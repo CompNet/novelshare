@@ -12,22 +12,22 @@ from sacred.observers import FileStorageObserver
 from sacred.commands import print_config
 from sacred.run import Run
 from sacred.utils import apply_backspaces_and_linefeeds
-from novelties_bookshare.hash import hash_tokens
-from novelties_bookshare.align import (
+from novelshare.hash import hash_tokens
+from novelshare.align import (
     align_tokens,
     make_plugin_mlm,
     make_plugin_propagate,
     make_plugin_retokenize,
     make_plugin_case,
 )
-from novelties_bookshare.experiments.data import iter_book_chapters, load_book
-from novelties_bookshare.experiments.metrics import log_alignment_metrics_
-from novelties_bookshare.experiments.errors import ocr_scramble
+from novelshare.experiments.data import iter_book_chapters, load_book
+from novelshare.experiments.metrics import log_alignment_metrics_
+from novelshare.experiments.errors import ocr_scramble
 
 ex = Experiment()
 ex.captured_out_filter = apply_backspaces_and_linefeeds  # type: ignore
 ex.observers.append(FileStorageObserver("runs"))
-from novelties_bookshare.experiments.data import (
+from novelshare.experiments.data import (
     load_corpus,
     CorpusID,
     Strategy,

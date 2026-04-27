@@ -1,7 +1,7 @@
 from typing import Literal
 from collections import defaultdict
 from sacred.run import Run
-from novelties_bookshare.utils import (
+from novelshare.utils import (
     ner_entities,
     CorefMention,
     flattened_coref_mentions,

@@ -2,7 +2,7 @@ import random, copy
 import numpy as np
 from collections import Counter
 from scrambledtext import CorruptionEngine
-from novelties_bookshare.experiments.ocr_utils import (
+from novelshare.experiments.ocr_utils import (
     DEFAULT_PROBABILITY_DISTRIBUTIONS,
     _load_ocr_probability_distributions_from_dict,
 )

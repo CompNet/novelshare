@@ -4,9 +4,9 @@ import sys, os, argparse, difflib
 import functools as ft
 from collections import Counter
 from more_itertools import flatten
-from novelties_bookshare.conll import dump_conll2002_bio, load_conll2002_bio
-from novelties_bookshare.hash import hash_token, hash_tokens
-from novelties_bookshare.utils import strksplit
+from novelshare.conll import dump_conll2002_bio, load_conll2002_bio
+from novelshare.hash import hash_token, hash_tokens
+from novelshare.utils import strksplit
 
 
 def load_user_tokens(path: Optional[str], **kwargs) -> list[str]:

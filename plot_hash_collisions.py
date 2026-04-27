@@ -5,8 +5,8 @@ from statistics import mean
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 import scienceplots
-from novelties_bookshare.hash import hash_tokens
-from novelties_bookshare.experiments.data import load_book, EDITION_SETS
+from novelshare.hash import hash_tokens
+from novelshare.experiments.data import load_book, EDITION_SETS
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

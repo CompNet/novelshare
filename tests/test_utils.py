@@ -1,6 +1,6 @@
 from hypothesis import given, strategies as st
 import math
-from novelties_bookshare.utils import strksplit
+from novelshare.utils import strksplit
 
 
 @given(st.text(max_size=16), st.integers(min_value=1, max_value=8))

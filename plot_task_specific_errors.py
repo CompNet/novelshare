@@ -15,7 +15,7 @@ from plot_xp_synthetic_errors import (
     METRIC2PRETTY,
     METRIC_TO_YFORMATTER,
 )
-from novelties_bookshare.experiments.plot_utils import (
+from novelshare.experiments.plot_utils import (
     MARKER_PAIRS,
     STRAT_MARKERS_HINT,
     COLOR_PAIRS,

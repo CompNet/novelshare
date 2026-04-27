@@ -8,17 +8,17 @@ from sacred.observers import FileStorageObserver
 from sacred.commands import print_config
 from sacred.run import Run
 from sacred.utils import apply_backspaces_and_linefeeds
-from novelties_bookshare.conll import load_conll2002_bio
-from novelties_bookshare.hash import hash_tokens
-from novelties_bookshare.align import (
+from novelshare.conll import load_conll2002_bio
+from novelshare.hash import hash_tokens
+from novelshare.align import (
     align_tokens,
     make_plugin_mlm,
     make_plugin_propagate,
     make_plugin_retokenize,
     make_plugin_case,
 )
-from novelties_bookshare.experiments.data import normalize_, iter_book_chapters
-from novelties_bookshare.experiments.metrics import log_alignment_metrics_, errors
+from novelshare.experiments.data import normalize_, iter_book_chapters
+from novelshare.experiments.metrics import log_alignment_metrics_, errors
 
 ex = Experiment()
 ex.captured_out_filter = apply_backspaces_and_linefeeds  # type: ignore

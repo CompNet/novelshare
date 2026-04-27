@@ -5,9 +5,9 @@ from dataclasses import dataclass
 from more_itertools import flatten
 from datasets import load_dataset as hf_load_dataset, VerificationMode
 from sacred.run import Run
-from novelties_bookshare.conll import load_conll2002_bio
-from novelties_bookshare.utils import CorefMention
-from novelties_bookshare.experiments.metrics import (
+from novelshare.conll import load_conll2002_bio
+from novelshare.utils import CorefMention
+from novelshare.experiments.metrics import (
     log_ner_task_metrics_,
     log_coref_task_metrics_,
 )

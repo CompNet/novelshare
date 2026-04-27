@@ -7,7 +7,7 @@ import numpy as np
 import scienceplots
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
-from novelties_bookshare.experiments.plot_utils import (
+from novelshare.experiments.plot_utils import (
     MARKERS,
     STRAT_MARKERS_HINT,
     STRAT_COLOR_HINTS,
