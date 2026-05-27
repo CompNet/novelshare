@@ -7,7 +7,7 @@ Novelshare is a library that allows to share annotations of a copyrighted corpus
 
 # Installation
 
-Currently, novelshare is not on PyPi, but you can install it directly from GitHub with `pip install 'git+https://github.com/CompNet/novelshare/tree/master'`.
+Currently, novelshare is not on PyPi, but you can install it directly from GitHub with `pip install 'git+https://github.com/CompNet/novelshare'`.
 
 
 # Library user guide
