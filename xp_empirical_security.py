@@ -129,10 +129,10 @@ class HashMaskLogitsProcessor(LogitsProcessor):
 
                 for word_idx, node in current_states:
                     # TODO: should not happen?
-                    # if node is None:
-                    #     if token == self.tokenizer.eos_token_id:
-                    #         next_states.add((word_idx, None))
-                    #     continue
+                    if node is None:
+                        if token == self.tokenizer.eos_token_id:
+                            next_states.add((word_idx, None))
+                        continue
 
                     if token in node.children:
                         next_node: TrieNode = node.children[token]
