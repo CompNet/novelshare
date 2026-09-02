@@ -7,15 +7,16 @@ from novelshare.conll import dump_conll2002_bio, load_conll2002_bio
 
 
 @functools.lru_cache
-def hash_token(token: str, hash_len: Optional[int] = None) -> str:
+def hash_token(token: str, hash_len: int | None = None) -> str:
     h = hashlib.sha256()
     h.update(token.encode("utf-8"))
+    string = format(int.from_bytes(h.digest(), "big"), "0256b")[2:]
     if not hash_len is None:
-        return h.hexdigest()[:hash_len]
-    return h.hexdigest()
+        return string[:hash_len]
+    return string
 
 
-def hash_tokens(tokens: List[str], hash_len: Optional[int] = None) -> List[str]:
+def hash_tokens(tokens: list[str], hash_len: int | None = None) -> list[str]:
     return [hash_token(token, hash_len) for token in tokens]
 
 
