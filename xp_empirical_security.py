@@ -2,6 +2,7 @@ from typing import Literal
 import hashlib, re
 import pathlib as pl
 from collections import defaultdict
+from more_itertools import flatten
 from tqdm import tqdm
 from sacred import Experiment
 from sacred.observers import FileStorageObserver
@@ -75,31 +76,28 @@ class HashMaskLogitsProcessor(LogitsProcessor):
         self.words_nb = len(self.word_tries)
         self.prompt_len = prompt_len
 
-        # we perform batched tokenization for performance reasons
-        flat_words = []
-        words_to_trie_idx = []
-        for i, word_set in enumerate(allowed_words):
-            for word in word_set:
-                # prefix = " " if i > 0 and not word.startswith(" ") else ""
+        word_to_token_ids = {}
+        for word in flatten(allowed_words):
+            if not word in word_to_token_ids:
                 prefix = " "
-                flat_words.append(prefix + word)
-                words_to_trie_idx.append(i)
-        batched_tokenized = self.tokenizer(flat_words, add_special_tokens=False)
-        batched_token_ids = batched_tokenized["input_ids"]
+                word_to_token_ids[word] = self.tokenizer.encode(
+                    prefix + word, add_special_tokens=False
+                )
 
-        for trie_idx, token_ids in zip(words_to_trie_idx, batched_token_ids):
-            node = self.word_tries[trie_idx]
+        for root, words in zip(self.word_tries, allowed_words):
+            for word in words:
+                node = root
+                token_ids = word_to_token_ids[word]
 
-            # handle empty tokenizations
-            if not token_ids:
+                if len(token_ids) == 0:
+                    node.is_end_of_word = True
+                    continue
+
+                for token_id in token_ids:
+                    if token_id not in node.children:
+                        node.children[token_id] = TrieNode()
+                    node = node.children[token_id]
                 node.is_end_of_word = True
-                continue
-
-            for token_id in token_ids:
-                if token_id not in node.children:
-                    node.children[token_id] = TrieNode()
-                node = node.children[token_id]
-            node.is_end_of_word = True
 
     def __call__(
         self, input_ids: torch.LongTensor, scores: torch.FloatTensor
@@ -214,7 +212,6 @@ def constrained_inference(
     # pad if we did not generate everything
     output = output + ["[UNK]"] * (len(allowed_words) - len(output))
 
-    # TODO: force len
     return output
 
 
@@ -263,27 +260,33 @@ def main(
         make_plugin_propagate(),
     ]
 
-    progress = tqdm(list(range(16, 3, -1)))
+    progress = tqdm(list(range(16, -1, -1)))
     for hash_len in progress:
         progress.set_description(f"h={hash_len}")
 
-        allowed_words = get_allowed_words(target_words, vocab, hash_len)
+        if hash_len == 0:
+            allowed_words = [vocab for _ in target_words]
+        else:
+            allowed_words = get_allowed_words(target_words, vocab, hash_len)
         pred_words = constrained_inference(
             model, tokenizer, device, prompt, allowed_words
         )
         _run.log_scalar(
-            "model.errors_percent", errors_percent(target_words, pred_words), hash_len
-        )
-
-        target_hashed = hash_tokens(target_words, hash_len)
-        aligned_words = align_tokens(
-            target_hashed,
-            user_words,
-            hash_len=hash_len,
-            alignment_plugins=pipe_strategy,
-        )
-        _run.log_scalar(
-            "alignment.errors_percent",
-            errors_percent(target_words, aligned_words),
+            "model.errors_percent",
+            errors_percent(target_words, pred_words),
             hash_len,
         )
+
+        if hash_len > 0:
+            target_hashed = hash_tokens(target_words, hash_len)
+            aligned_words = align_tokens(
+                target_hashed,
+                user_words,
+                hash_len=hash_len,
+                alignment_plugins=pipe_strategy,
+            )
+            _run.log_scalar(
+                "alignment.errors_percent",
+                errors_percent(target_words, aligned_words),
+                hash_len,
+            )
