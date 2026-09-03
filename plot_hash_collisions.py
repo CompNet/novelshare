@@ -59,7 +59,7 @@ if __name__ == "__main__":
     plt.tight_layout()
 
     fig = plt.gcf()
-    fig.set_size_inches(4, 2)
+    fig.set_size_inches(8, 4)
     if not args.output_file is None:
         plt.savefig(args.output_file)
     else:
