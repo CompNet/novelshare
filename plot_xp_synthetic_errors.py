@@ -128,6 +128,7 @@ if __name__ == "__main__":
         default=None,
     )
     parser.add_argument("-o", "--output-dir", type=pl.Path)
+    parser.add_argument("-s", "--style", type=str, default="science")
     args = parser.parse_args()
 
     metrics = load_metrics(args.run)
@@ -176,7 +177,7 @@ if __name__ == "__main__":
     # plot
     os.makedirs(args.output_dir, exist_ok=True)
     cols_nb = 3
-    plt.style.use("science")
+    plt.style.use(args.style)
     plt.rcParams.update({"font.size": 16})
 
     # # one subplot per "noise"
@@ -203,7 +204,7 @@ if __name__ == "__main__":
             if args.metric in METRIC_TO_YFORMATTER:
                 ax.yaxis.set_major_formatter(METRIC_TO_YFORMATTER[args.metric])
             ax.set_xlabel(info.get(f"{noise}.errors_unit", "steps"))
-            ax.grid()
+            ax.grid(True)
             if noise == "ocr_scramble":
                 xticks = ax.get_xticklabels()
                 ax.set_xticklabels(

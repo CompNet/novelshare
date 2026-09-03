@@ -49,6 +49,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("-l", "--labels", type=str, nargs="+")
     parser.add_argument("-o", "--output-file", type=pl.Path, default=None)
+    parser.add_argument("-s", "--style", type=str, default="science")
     args = parser.parse_args()
 
     df_dict = defaultdict(list)
@@ -79,7 +80,7 @@ if __name__ == "__main__":
         df = pd.DataFrame(df_dict)
 
     fig, axs = (None, None)
-    plt.style.use("science")
+    plt.style.use(args.style)
     cols_nb = 3
     plt.rcParams.update({"font.size": 16})
 
@@ -131,7 +132,7 @@ if __name__ == "__main__":
             if metric in METRIC_TO_YFORMATTER:
                 ax.yaxis.set_major_formatter(METRIC_TO_YFORMATTER[metric])
             ax.set_xlabel(info.get(f"{noise}.errors_unit", "steps"))
-            ax.grid()
+            ax.grid(True)
             if noise == "ocr_scramble":
                 xticks = ax.get_xticklabels()
                 ax.set_xticklabels(

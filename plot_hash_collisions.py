@@ -12,6 +12,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-o", "--output-file", type=pl.Path, default=None)
     parser.add_argument("-l", "--log-scale", action="store_true")
+    parser.add_argument("-s", "--style", type=str, default="science")
     args = parser.parse_args()
 
     tokens = []
@@ -32,7 +33,7 @@ if __name__ == "__main__":
     assert all(Y[i] >= Y[i + 1] for i in range(len(Y) - 1))
     Y = [value for value in Y if value > 0.01]
 
-    plt.style.use("science")
+    plt.style.use(args.style)
     plt.rcParams.update({"font.size": 10})
     X = [i + 1 for i in range(len(Y))]
     plt.plot(X, Y, linewidth=1, marker="*", markersize=8)
@@ -49,12 +50,12 @@ if __name__ == "__main__":
             va="bottom",
             fontsize=8,
         )
-    ax.grid()
-    plt.ylabel(
+    ax.grid(True)
+    ax.set_ylabel(
         "Mean coll. per token" + " (log)" if args.log_scale else "",
         fontsize=10,
     )
-    plt.xlabel("Hash length")
+    ax.set_xlabel("Hash length")
     plt.tight_layout()
 
     fig = plt.gcf()

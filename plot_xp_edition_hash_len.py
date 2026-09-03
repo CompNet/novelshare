@@ -63,6 +63,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("-l", "--log-scale", action="store_true")
     parser.add_argument("-o", "--output-file", type=pl.Path, default=None)
+    parser.add_argument("-s", "--style", type=str, default="science")
     args = parser.parse_args()
 
     assert len(args.runs) > 0
@@ -72,7 +73,7 @@ if __name__ == "__main__":
         df = pd.concat([df, run_df])
     print(df)
 
-    plt.style.use("science")
+    plt.style.use(args.style)
     plt.rcParams.update({"font.size": 10})
     fig, ax = plt.subplots()
     for i, strat in enumerate(set(df["strategy"])):
@@ -108,7 +109,7 @@ if __name__ == "__main__":
         ax.xaxis.set_minor_formatter(mtick.FixedFormatter(["..." for _ in minor_ticks]))
         ax.tick_params(which="minor", length=0)
 
-    ax.grid()
+    ax.grid(True)
     ax.legend(ncols=2)
     ax.set_xlabel("Hash length")
     ax.set_ylabel(METRIC_TO_YLABEL[args.metric] + " (log)" if args.log_scale else "")

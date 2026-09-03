@@ -148,6 +148,7 @@ if __name__ == "__main__":
     parser.add_argument("-a", "--annotate-values", action="store_true")
     parser.add_argument("-e", "--exclude-strategies", nargs="*", type=str, default=None)
     parser.add_argument("-o", "--output-file", type=pl.Path, default=None)
+    parser.add_argument("-s", "--style", type=str, default="science")
     args = parser.parse_args()
     assert args.metric
 
@@ -174,7 +175,7 @@ if __name__ == "__main__":
     except ValueError:
         pass
 
-    plt.style.use("science")
+    plt.style.use(args.style)
     plt.rcParams.update({"font.size": 10})
     # when columns are strategies, we use STRAT_COLOR_HINTS to provide
     # the correct color for each bar. Otherwise, we simply use the
@@ -201,7 +202,7 @@ if __name__ == "__main__":
     )
     if args.metric in METRIC_TO_YFORMATTER:
         ax.yaxis.set_major_formatter(METRIC_TO_YFORMATTER[args.metric])
-    ax.grid()
+    ax.grid(True)
     if args.log_scale:
         ax.set_yscale("log")
 
