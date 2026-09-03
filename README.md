@@ -130,6 +130,7 @@ my_dataset = load_dataset("compnet-renard/7-romans-ner", split="train") # exampl
 # the tokens of the dataset. It is possible to override this behaviour
 # by passing the optional 'tokens_col' parameter.
 hashed_dataset = hash_hf_dataset_tokens(my_dataset, hash_len=2)
+
 print(hashed_dataset[0]["tokens"])
 # ['12', 'b7', '40', 'b6', 'bc', '66', 'b7', 'de', '95', '4c', '33', '95', 'c3', 'aa', 'd0', 'b1', '8a', '38', '60', 'ee', 'cd']
 ```
@@ -140,6 +141,7 @@ It is also possible to align the of a hashed huggingface dataset with your user 
 user_tokens = list(my_dataset["tokens"])
 # as above, one can pass the 'tokens_col' parameter.
 aligned = align_hf_dataset_tokens(hashed_dataset, user_tokens, hash_len=2)
+
 print(aligned[0]["tokens"])
 # ['Quand', 'la', 'caissière', 'lui', 'eut', 'rendu', 'la', 'monnaie', 'de', 'sa', 'pièce', 'de', 'cent', 'sous', ',', 'Georges', 'Duroy', 'sortit', 'du', 'restaurant', '.']
 ```
