@@ -181,9 +181,11 @@ if __name__ == "__main__":
     # the correct color for each bar. Otherwise, we simply use the
     # default.
     if all(col in STRAT_COLOR_HINTS for col in df.columns):
-        ax = df.plot.bar(color=[STRAT_COLOR_HINTS[strat] for strat in df.columns])
+        ax = df.plot.bar(
+            color=[STRAT_COLOR_HINTS[strat] for strat in df.columns], rot=0
+        )
     else:
-        ax = df.plot.bar()
+        ax = df.plot.bar(rot=0)
     # apply EDITION_COLOR_HINTS
     for label in ax.get_xticklabels():
         if label.get_text() in EDITION_COLOR_HINTS:
