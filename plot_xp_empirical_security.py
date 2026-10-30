@@ -1,5 +1,6 @@
 import argparse, json
 from pathlib import Path
+import scienceplots
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 
