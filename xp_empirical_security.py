@@ -60,7 +60,7 @@ class TrieNode:
 class HashMaskLogitsProcessor(LogitsProcessor):
     def __init__(
         self,
-        allowed_words: list[set[str]],
+        allowed_words: list[frozenset[str]],
         tokenizer: PreTrainedTokenizer,
         prompt_len: int,
     ):
@@ -72,8 +72,7 @@ class HashMaskLogitsProcessor(LogitsProcessor):
         self.tokenizer = tokenizer
         if self.tokenizer.eos_token_id is None:
             raise ValueError("tokenizer must have a defined eos_token_id")
-        self.word_tries = [TrieNode() for _ in allowed_words]
-        self.words_nb = len(self.word_tries)
+        self.words_nb = len(allowed_words)
         self.prompt_len = prompt_len
 
         word_to_token_ids = {}
@@ -84,9 +83,15 @@ class HashMaskLogitsProcessor(LogitsProcessor):
                     prefix + word, add_special_tokens=False
                 )
 
-        for root, words in zip(self.word_tries, allowed_words):
+        self.allowed_words = allowed_words
+        self.wordset_tries = {}
+
+        for words in allowed_words:
+            if words in self.wordset_tries:
+                continue
+            self.wordset_tries[words] = TrieNode()
             for word in words:
-                node = root
+                node = self.wordset_tries[words]
                 token_ids = word_to_token_ids[word]
 
                 if len(token_ids) == 0:
@@ -107,7 +112,7 @@ class HashMaskLogitsProcessor(LogitsProcessor):
         :param scores: (b, v)
         """
         # edge case: user forces 0 words, so we output EOS immediately
-        if len(self.word_tries) == 0:
+        if len(self.wordset_tries) == 0:
             mask = torch.full_like(scores, -float("inf"))
             mask[:, self.tokenizer.eos_token_id] = 0
             return scores + mask
@@ -122,7 +127,8 @@ class HashMaskLogitsProcessor(LogitsProcessor):
             # (current_word_idx, current_trie_node | None)
             #                                         ^
             #                                terminal DONE state
-            current_states = {(0, self.word_tries[0])}
+            wordset = self.allowed_words[0]
+            current_states = {(0, self.wordset_tries[wordset])}
 
             for token in seq_generated:
                 next_states = set()
@@ -143,8 +149,9 @@ class HashMaskLogitsProcessor(LogitsProcessor):
                         # second path: go to the next word if applicable
                         if next_node.is_end_of_word:
                             if word_idx + 1 < self.words_nb:
+                                wordset = self.allowed_words[word_idx + 1]
                                 next_states.add(
-                                    (word_idx + 1, self.word_tries[word_idx + 1])
+                                    (word_idx + 1, self.wordset_tries[wordset])
                                 )
                             else:
                                 next_states.add((self.words_nb, None))
@@ -171,12 +178,13 @@ class HashMaskLogitsProcessor(LogitsProcessor):
 
 
 def get_allowed_words(
-    target_words: list[str], vocab: set[str], hash_len: int
-) -> list[set[str]]:
+    target_words: list[str], vocab: frozenset[str], hash_len: int
+) -> list[frozenset[str]]:
     hash2words = defaultdict(set)
     word2hash = {word: hash_token(word, hash_len) for word in vocab}
     for word in word2hash.keys():
         hash2words[hash_token(word, hash_len)].add(word)
+    hash2words = {h: frozenset(words) for h, words in hash2words.items()}
     return [hash2words[word2hash[word]] for word in target_words]
 
 
@@ -185,7 +193,7 @@ def constrained_inference(
     tokenizer,
     device: Literal["cuda", "cpu"],
     prompt: list[str],
-    allowed_words: list[set[str]],
+    allowed_words: list[frozenset[str]],
 ) -> list[str]:
     prompt_tokens = tokenizer(" ".join(prompt), return_tensors="pt").to(device)
 
@@ -251,6 +259,7 @@ def main(
             for chapter in iter_book_chapters(edition_path):
                 for word in chapter:
                     vocab.add(word)
+    vocab = frozenset(vocab)
     _run.log_scalar("vocab_size", len(vocab))
 
     pipe_strategy = [
